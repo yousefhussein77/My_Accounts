@@ -1,0 +1,64 @@
+# debt_ledger_app
+
+debt_ledger_app هو تطبيق Flutter لإدارة الديون الشخصية محليًا. يساعدك على إضافة الأشخاص، تسجيل الديون والمدفوعات، متابعة الرصيد لكل شخص، عرض سجل العمليات، قراءة تقرير شهري، ومشاهدة تنبيهات الديون القريبة أو المتأخرة.
+
+## التشغيل
+
+```bash
+flutter pub get
+flutter run
+```
+
+ملاحظة: التطبيق يستخدم SQLite عبر `sqflite`، لذلك التشغيل الأنسب حاليًا هو Android/iOS. تشغيل Web يحتاج طبقة تخزين مختلفة أو إعداد SQLite خاص بالويب.
+
+للتحقق:
+
+```bash
+flutter analyze
+flutter test
+```
+
+## الخصائص
+
+- Splash و Onboarding.
+- تسجيل دخول، إنشاء حساب، واستعادة كلمة مرور Mock Auth.
+- Dashboard للرصيد المفتوح وإجمالي الديون والمدفوعات.
+- CRUD للأشخاص والعمليات.
+- SQLite عبر `sqflite`.
+- Repository layer لتسهيل الربط لاحقًا بـ Firebase أو API.
+- بحث، فلترة، ترتيب، ومفضلة.
+- سجل عمليات وتقارير شهرية.
+- تنبيهات Mock للديون المستحقة.
+- Profile و Settings.
+- Light/Dark Mode محفوظ محليًا.
+- Empty states و Loading states و Snackbars و Confirmation dialogs.
+
+## الهيكلة
+
+```text
+lib/
+  config/          Theme و GoRouter
+  core/            ثوابت، أدوات، Widgets مشتركة
+  data/            SQLite database و repositories
+  domain/          Models و repository contracts
+  presentation/    الشاشات و Riverpod providers
+```
+
+## الحزم
+
+- `flutter_riverpod`
+- `go_router`
+- `sqflite`
+- `path`
+- `shared_preferences`
+- `intl`
+- `flutter_animate`
+- `lucide_icons`
+- `uuid`
+
+بيانات الدخول التجريبية:
+
+```text
+demo@debtledger.local
+12345678
+```
