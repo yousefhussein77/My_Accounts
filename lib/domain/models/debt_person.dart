@@ -1,4 +1,4 @@
-﻿class DebtPerson {
+class DebtPerson {
   const DebtPerson({
     required this.id,
     required this.name,

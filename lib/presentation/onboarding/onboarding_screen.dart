@@ -1,5 +1,5 @@
-import 'package:debt_ledger_app/core/widgets/app_brand_logo.dart';
-import 'package:debt_ledger_app/presentation/shared/app_providers.dart';
+import 'package:my_accounts/core/widgets/app_brand_logo.dart';
+import 'package:my_accounts/presentation/shared/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

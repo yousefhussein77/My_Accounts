@@ -1,4 +1,4 @@
-import 'package:debt_ledger_app/core/widgets/app_empty_state.dart';
+import 'package:my_accounts/core/widgets/app_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 

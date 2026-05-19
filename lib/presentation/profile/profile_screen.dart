@@ -1,7 +1,7 @@
-import 'package:debt_ledger_app/core/utils/app_error.dart';
-import 'package:debt_ledger_app/core/utils/app_validators.dart';
-import 'package:debt_ledger_app/presentation/shared/app_header.dart';
-import 'package:debt_ledger_app/presentation/shared/app_providers.dart';
+import 'package:my_accounts/core/utils/app_error.dart';
+import 'package:my_accounts/core/utils/app_validators.dart';
+import 'package:my_accounts/presentation/shared/app_header.dart';
+import 'package:my_accounts/presentation/shared/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -125,7 +125,7 @@ class ProfileScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user?.name ?? 'مستخدم حساباتي',
+                            user?.name ?? 'مستخدم My Accounts',
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w900,
                                 ),

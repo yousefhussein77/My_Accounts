@@ -1,7 +1,7 @@
-import 'package:debt_ledger_app/core/utils/app_error.dart';
-import 'package:debt_ledger_app/core/utils/app_validators.dart';
-import 'package:debt_ledger_app/domain/models/debt_person.dart';
-import 'package:debt_ledger_app/presentation/shared/app_providers.dart';
+import 'package:my_accounts/core/utils/app_error.dart';
+import 'package:my_accounts/core/utils/app_validators.dart';
+import 'package:my_accounts/domain/models/debt_person.dart';
+import 'package:my_accounts/presentation/shared/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';

@@ -1,10 +1,10 @@
-import 'package:debt_ledger_app/core/utils/formatters.dart';
-import 'package:debt_ledger_app/domain/models/debt_transaction.dart';
-import 'package:debt_ledger_app/domain/models/money_currency.dart';
-import 'package:debt_ledger_app/presentation/shared/app_header.dart';
-import 'package:debt_ledger_app/presentation/shared/app_providers.dart';
-import 'package:debt_ledger_app/presentation/shared/currency_totals_view.dart';
-import 'package:debt_ledger_app/presentation/shared/metric_card.dart';
+import 'package:my_accounts/core/utils/formatters.dart';
+import 'package:my_accounts/domain/models/debt_transaction.dart';
+import 'package:my_accounts/domain/models/money_currency.dart';
+import 'package:my_accounts/presentation/shared/app_header.dart';
+import 'package:my_accounts/presentation/shared/app_providers.dart';
+import 'package:my_accounts/presentation/shared/currency_totals_view.dart';
+import 'package:my_accounts/presentation/shared/metric_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';

@@ -1,4 +1,4 @@
-import 'package:debt_ledger_app/domain/models/app_user.dart';
+import 'package:my_accounts/domain/models/app_user.dart';
 
 abstract class AuthRepository {
   Future<AppUser?> currentUser();

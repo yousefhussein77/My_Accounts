@@ -1,6 +1,6 @@
-import 'package:debt_ledger_app/domain/models/debt_person.dart';
-import 'package:debt_ledger_app/domain/models/debt_transaction.dart';
-import 'package:debt_ledger_app/domain/models/person_summary.dart';
+import 'package:my_accounts/domain/models/debt_person.dart';
+import 'package:my_accounts/domain/models/debt_transaction.dart';
+import 'package:my_accounts/domain/models/person_summary.dart';
 
 abstract class DebtRepository {
   Future<List<PersonSummary>> people(String userId);

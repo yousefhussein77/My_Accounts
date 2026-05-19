@@ -1,5 +1,5 @@
-import 'package:debt_ledger_app/domain/models/debt_person.dart';
-import 'package:debt_ledger_app/domain/models/money_currency.dart';
+import 'package:my_accounts/domain/models/debt_person.dart';
+import 'package:my_accounts/domain/models/money_currency.dart';
 
 class PersonSummary {
   const PersonSummary({

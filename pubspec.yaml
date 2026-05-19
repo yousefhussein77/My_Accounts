@@ -1,5 +1,5 @@
-name: debt_ledger_app
-description: "A polished personal debt manager built with Flutter and SQLite."
+name: my_accounts
+description: "My Accounts - تطبيق Flutter لإدارة الحسابات والديون الشخصية محليًا."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

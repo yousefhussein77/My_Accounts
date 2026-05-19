@@ -1,7 +1,7 @@
-import 'package:debt_ledger_app/core/security/password_hasher.dart';
-import 'package:debt_ledger_app/data/local/app_database.dart';
-import 'package:debt_ledger_app/domain/models/app_user.dart';
-import 'package:debt_ledger_app/domain/repositories/auth_repository.dart';
+import 'package:my_accounts/core/security/password_hasher.dart';
+import 'package:my_accounts/data/local/app_database.dart';
+import 'package:my_accounts/domain/models/app_user.dart';
+import 'package:my_accounts/domain/repositories/auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 

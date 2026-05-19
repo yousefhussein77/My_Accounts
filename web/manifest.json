@@ -1,6 +1,6 @@
 {
-    "name": "حساباتي",
-    "short_name": "حساباتي",
+    "name": "My Accounts",
+    "short_name": "My Accounts",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

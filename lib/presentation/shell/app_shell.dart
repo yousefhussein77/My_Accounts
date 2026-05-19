@@ -1,7 +1,7 @@
-import 'package:debt_ledger_app/presentation/people/people_screen.dart';
-import 'package:debt_ledger_app/presentation/profile/profile_screen.dart';
-import 'package:debt_ledger_app/presentation/reports/reports_screen.dart';
-import 'package:debt_ledger_app/presentation/transactions/transactions_screen.dart';
+import 'package:my_accounts/presentation/people/people_screen.dart';
+import 'package:my_accounts/presentation/profile/profile_screen.dart';
+import 'package:my_accounts/presentation/reports/reports_screen.dart';
+import 'package:my_accounts/presentation/transactions/transactions_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 

@@ -6,7 +6,7 @@ class AppDatabase {
 
   static final AppDatabase instance = AppDatabase._();
   Database? _database;
-  static const _dbName = 'debt_ledger_app.db';
+  static const _dbName = 'my_accounts.db';
 
   Future<Database> get database async {
     if (_database != null) return _database!;

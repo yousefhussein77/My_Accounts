@@ -1,5 +1,5 @@
-import 'package:debt_ledger_app/core/utils/app_validators.dart';
-import 'package:debt_ledger_app/presentation/auth/auth_form_shell.dart';
+import 'package:my_accounts/core/utils/app_validators.dart';
+import 'package:my_accounts/presentation/auth/auth_form_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';

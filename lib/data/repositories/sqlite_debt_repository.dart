@@ -1,9 +1,9 @@
-import 'package:debt_ledger_app/data/local/app_database.dart';
-import 'package:debt_ledger_app/domain/models/debt_person.dart';
-import 'package:debt_ledger_app/domain/models/debt_transaction.dart';
-import 'package:debt_ledger_app/domain/models/money_currency.dart';
-import 'package:debt_ledger_app/domain/models/person_summary.dart';
-import 'package:debt_ledger_app/domain/repositories/debt_repository.dart';
+import 'package:my_accounts/data/local/app_database.dart';
+import 'package:my_accounts/domain/models/debt_person.dart';
+import 'package:my_accounts/domain/models/debt_transaction.dart';
+import 'package:my_accounts/domain/models/money_currency.dart';
+import 'package:my_accounts/domain/models/person_summary.dart';
+import 'package:my_accounts/domain/repositories/debt_repository.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 
 class SqliteDebtRepository implements DebtRepository {

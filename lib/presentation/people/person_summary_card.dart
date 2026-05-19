@@ -1,7 +1,7 @@
-import 'package:debt_ledger_app/core/utils/formatters.dart';
-import 'package:debt_ledger_app/domain/models/person_summary.dart';
-import 'package:debt_ledger_app/presentation/shared/currency_totals_view.dart';
-import 'package:debt_ledger_app/presentation/shared/status_pill.dart';
+import 'package:my_accounts/core/utils/formatters.dart';
+import 'package:my_accounts/domain/models/person_summary.dart';
+import 'package:my_accounts/presentation/shared/currency_totals_view.dart';
+import 'package:my_accounts/presentation/shared/status_pill.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 

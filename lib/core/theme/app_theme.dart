@@ -1,7 +1,7 @@
-import 'package:debt_ledger_app/core/theme/app_colors.dart';
-import 'package:debt_ledger_app/core/theme/app_radius.dart';
-import 'package:debt_ledger_app/core/theme/app_spacing.dart';
-import 'package:debt_ledger_app/core/theme/app_text_styles.dart';
+import 'package:my_accounts/core/theme/app_colors.dart';
+import 'package:my_accounts/core/theme/app_radius.dart';
+import 'package:my_accounts/core/theme/app_spacing.dart';
+import 'package:my_accounts/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {

@@ -1,8 +1,8 @@
-import 'package:debt_ledger_app/config/app_router.dart';
-import 'package:debt_ledger_app/config/app_theme.dart';
-import 'package:debt_ledger_app/core/constants/app_constants.dart';
-import 'package:debt_ledger_app/data/local/app_database.dart';
-import 'package:debt_ledger_app/presentation/shared/app_providers.dart';
+import 'package:my_accounts/config/app_router.dart';
+import 'package:my_accounts/config/app_theme.dart';
+import 'package:my_accounts/core/constants/app_constants.dart';
+import 'package:my_accounts/data/local/app_database.dart';
+import 'package:my_accounts/presentation/shared/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,15 +21,15 @@ Future<void> main() async {
     };
     await initializeDateFormatting('ar');
     await AppDatabase.instance.database;
-    runApp(const ProviderScope(child: DebtLedgerApp()));
+    runApp(const ProviderScope(child: MyAccountsApp()));
   }, (error, stackTrace) {
     debugPrint('Uncaught app error: $error');
     debugPrintStack(stackTrace: stackTrace);
   });
 }
 
-class DebtLedgerApp extends ConsumerWidget {
-  const DebtLedgerApp({super.key});
+class MyAccountsApp extends ConsumerWidget {
+  const MyAccountsApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

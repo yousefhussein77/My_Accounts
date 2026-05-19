@@ -1,4 +1,4 @@
-import 'package:debt_ledger_app/core/widgets/app_brand_logo.dart';
+import 'package:my_accounts/core/widgets/app_brand_logo.dart';
 import 'package:flutter/material.dart';
 
 class AuthFormShell extends StatelessWidget {

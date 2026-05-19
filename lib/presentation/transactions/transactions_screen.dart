@@ -1,8 +1,8 @@
-import 'package:debt_ledger_app/core/widgets/app_empty_state.dart';
-import 'package:debt_ledger_app/presentation/shared/app_header.dart';
-import 'package:debt_ledger_app/presentation/shared/app_providers.dart';
-import 'package:debt_ledger_app/presentation/transactions/transaction_card.dart';
-import 'package:debt_ledger_app/presentation/transactions/transaction_form_sheet.dart';
+import 'package:my_accounts/core/widgets/app_empty_state.dart';
+import 'package:my_accounts/presentation/shared/app_header.dart';
+import 'package:my_accounts/presentation/shared/app_providers.dart';
+import 'package:my_accounts/presentation/transactions/transaction_card.dart';
+import 'package:my_accounts/presentation/transactions/transaction_form_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
