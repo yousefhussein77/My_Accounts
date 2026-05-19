@@ -1,5 +1,6 @@
-package com.debtledger.app
+﻿package com.myaccounts.app
 
 import io.flutter.embedding.android.FlutterActivity
 
 class MainActivity : FlutterActivity()
+

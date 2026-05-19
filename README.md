@@ -59,6 +59,6 @@ lib/
 بيانات الدخول التجريبية:
 
 ```text
-demo@debtledger.local
+demo@myaccounts.local
 12345678
 ```
