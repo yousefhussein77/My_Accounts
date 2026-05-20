@@ -17,6 +17,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   static const _backupCanceled = '__backup_canceled__';
+  static const _backupReminderThreshold = Duration(days: 7);
 
   bool _backupBusy = false;
   bool _restoreBusy = false;
@@ -26,6 +27,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final ref = this.ref;
     final settings = ref.watch(settingsControllerProvider);
     final controller = ref.read(settingsControllerProvider.notifier);
+    final backupReminderText = _buildBackupReminderText(settings);
     final backupMetaText = _buildBackupMetaText(settings);
 
     return Scaffold(
@@ -90,6 +92,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
+          if (backupReminderText != null) ...[
+            const SizedBox(height: 10),
+            _BackupReminderCard(
+              message: backupReminderText,
+              onCreateBackup: _backupBusy ? null : _createBackup,
+            ),
+          ],
           const SizedBox(height: 10),
           const _BackupGuidanceCard(),
           if (backupMetaText != null) ...[
@@ -319,6 +328,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     final atText = DateFormat('yyyy/MM/dd - HH:mm', 'ar').format(at);
     return '$atText\n$path';
+  }
+
+  String? _buildBackupReminderText(AppSettings settings) {
+    final lastBackupAt = settings.lastBackupAt;
+    if (lastBackupAt == null) {
+      return 'لم يتم إنشاء نسخة احتياطية بعد. احفظ نسخة خارج الجهاز لتجنب فقدان البيانات.';
+    }
+
+    final elapsed = DateTime.now().difference(lastBackupAt);
+    if (elapsed < _backupReminderThreshold) return null;
+
+    final days = elapsed.inDays;
+    return 'آخر نسخة احتياطية كانت قبل $days يوم. يفضّل إنشاء نسخة جديدة وحفظها خارج الجهاز.';
+  }
+}
+
+class _BackupReminderCard extends StatelessWidget {
+  const _BackupReminderCard({
+    required this.message,
+    required this.onCreateBackup,
+  });
+
+  final String message;
+  final VoidCallback? onCreateBackup;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      color: colorScheme.errorContainer,
+      child: ListTile(
+        leading: Icon(
+          LucideIcons.alertTriangle,
+          color: colorScheme.onErrorContainer,
+        ),
+        title: Text(
+          'تذكير النسخ الاحتياطي',
+          style: TextStyle(color: colorScheme.onErrorContainer),
+        ),
+        subtitle: Text(
+          message,
+          style: TextStyle(color: colorScheme.onErrorContainer),
+        ),
+        trailing: TextButton(
+          onPressed: onCreateBackup,
+          child: const Text('نسخ الآن'),
+        ),
+      ),
+    );
   }
 }
 
