@@ -147,6 +147,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     if (!mounted) return;
     if (password == null) return;
+    if (password.isEmpty) {
+      final confirmedPlainBackup = await _confirmPlainBackup();
+      if (!mounted) return;
+      if (!confirmedPlainBackup) return;
+    }
     if (password.isNotEmpty && password.length < _minBackupPasswordLength) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -309,6 +314,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     controller.dispose();
     return result;
+  }
+
+  Future<bool> _confirmPlainBackup() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('نسخة غير مشفرة'),
+        content: const Text(
+          'سيتم إنشاء نسخة احتياطية بدون كلمة مرور. استخدم هذا الخيار فقط إذا كنت ستحفظها في مكان آمن.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('رجوع'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('متابعة'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
   }
 
   Future<String?> _askBackupDirectory() async {
