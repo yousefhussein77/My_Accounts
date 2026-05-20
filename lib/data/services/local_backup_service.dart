@@ -351,6 +351,8 @@ class LocalBackupService {
     try {
       final raw = utf8.decode(encryptedBytes);
       final map = jsonDecode(raw) as Map<String, dynamic>;
+      _validateEncryptedPayload(map);
+
       final salt = base64Decode(map['salt'] as String);
       final nonce = base64Decode(map['nonce'] as String);
       final cipher = base64Decode(map['cipher'] as String);
@@ -369,6 +371,21 @@ class LocalBackupService {
       return Uint8List.fromList(clear);
     } catch (_) {
       throw Exception('فشل فك تشفير النسخة. تحقق من كلمة المرور');
+    }
+  }
+
+  void _validateEncryptedPayload(Map<String, dynamic> map) {
+    final version = map['v'];
+    final algorithm = map['alg'];
+    if (version != 1 || algorithm != 'aes-gcm-256') {
+      throw const FormatException('Unsupported backup format');
+    }
+
+    for (final key in const ['salt', 'nonce', 'cipher', 'mac']) {
+      final value = map[key];
+      if (value is! String || value.trim().isEmpty) {
+        throw const FormatException('Invalid encrypted backup payload');
+      }
     }
   }
 
