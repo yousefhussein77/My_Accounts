@@ -111,6 +111,7 @@ class LocalBackupService {
         await rollbackFile.delete();
       }
       if (await dbFile.exists()) {
+        await _createPreRestoreBackup(dbFile);
         await dbFile.copy(rollbackFile.path);
         hasRollback = true;
       }
@@ -142,6 +143,16 @@ class LocalBackupService {
     }
     final appDocDir = await getApplicationDocumentsDirectory();
     return Directory(join(appDocDir.path, 'backups'));
+  }
+
+  Future<void> _createPreRestoreBackup(File dbFile) async {
+    final backupDir = await _resolveBackupDirectory(null);
+    if (!await backupDir.exists()) {
+      await backupDir.create(recursive: true);
+    }
+
+    final path = join(backupDir.path, _buildPreRestoreBackupFileName());
+    await dbFile.copy(path);
   }
 
   Future<void> _validateBackupSchema(String backupPath) async {
@@ -283,6 +294,17 @@ class LocalBackupService {
     final s = now.second.toString().padLeft(2, '0');
     final ext = encrypted ? _encryptedExt : _plainExt;
     return 'my_accounts_backup_${y}_$m_${d}_$h$min$s$ext';
+  }
+
+  String _buildPreRestoreBackupFileName() {
+    final now = DateTime.now();
+    final y = now.year.toString().padLeft(4, '0');
+    final m = now.month.toString().padLeft(2, '0');
+    final d = now.day.toString().padLeft(2, '0');
+    final h = now.hour.toString().padLeft(2, '0');
+    final min = now.minute.toString().padLeft(2, '0');
+    final s = now.second.toString().padLeft(2, '0');
+    return 'my_accounts_pre_restore_${y}_$m_${d}_$h$min$s$_plainExt';
   }
 
   Future<Uint8List> _encryptBytes(
