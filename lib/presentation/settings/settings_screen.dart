@@ -18,6 +18,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   static const _backupCanceled = '__backup_canceled__';
   static const _backupReminderThreshold = Duration(days: 7);
+  static const _minBackupPasswordLength = 8;
 
   bool _backupBusy = false;
   bool _restoreBusy = false;
@@ -146,6 +147,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     if (!mounted) return;
     if (password == null) return;
+    if (password.isNotEmpty && password.length < _minBackupPasswordLength) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('كلمة مرور النسخة المشفرة يجب أن تكون 8 أحرف على الأقل'),
+        ),
+      );
+      return;
+    }
 
     final directoryPath = await _askBackupDirectory();
     if (!mounted) return;
