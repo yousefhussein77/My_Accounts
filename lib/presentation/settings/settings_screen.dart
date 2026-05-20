@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:path/path.dart' as p;
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -242,6 +243,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       return;
     }
 
+    final confirmedFile = await _confirmRestoreFile(filePath);
+    if (!mounted) return;
+    if (!confirmedFile) return;
+
     String? password;
     if (lowerPath.endsWith('.mabk')) {
       password = await _askPassword(
@@ -332,6 +337,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('متابعة'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
+  }
+
+  Future<bool> _confirmRestoreFile(String filePath) async {
+    final fileName = p.basename(filePath);
+    final isEncrypted = filePath.toLowerCase().endsWith('.mabk');
+    final backupType = isEncrypted ? 'مشفرة' : 'غير مشفرة';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('تأكيد ملف الاستعادة'),
+        content: Text(
+          'سيتم استعادة النسخة:\n$fileName\n\nنوع النسخة: $backupType\nسيتم استبدال البيانات الحالية بالكامل.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('رجوع'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('استعادة'),
           ),
         ],
       ),
