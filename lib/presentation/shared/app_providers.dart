@@ -1,6 +1,7 @@
 import 'package:my_accounts/data/local/app_database.dart';
 import 'package:my_accounts/data/repositories/local_auth_repository.dart';
 import 'package:my_accounts/data/repositories/sqlite_debt_repository.dart';
+import 'package:my_accounts/data/services/local_backup_service.dart';
 import 'package:my_accounts/core/security/password_hasher.dart';
 import 'package:my_accounts/domain/models/app_notification.dart';
 import 'package:my_accounts/domain/models/app_user.dart';
@@ -23,6 +24,18 @@ final authRepositoryProvider = Provider<AuthRepository>(
 
 final debtRepositoryProvider = Provider<DebtRepository>(
   (ref) => SqliteDebtRepository(ref.watch(databaseProvider)),
+);
+
+final backupServiceProvider = Provider<LocalBackupService>(
+  (ref) => LocalBackupService(ref.watch(databaseProvider)),
+);
+
+final createBackupUseCaseProvider = Provider<CreateBackupUseCase>(
+  (ref) => CreateBackupUseCase(ref.watch(backupServiceProvider)),
+);
+
+final restoreBackupUseCaseProvider = Provider<RestoreBackupUseCase>(
+  (ref) => RestoreBackupUseCase(ref.watch(backupServiceProvider)),
 );
 
 final addTransactionUseCaseProvider = Provider<AddTransactionUseCase>(

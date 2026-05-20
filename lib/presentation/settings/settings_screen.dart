@@ -1,15 +1,25 @@
 import 'package:my_accounts/core/constants/app_constants.dart';
 import 'package:my_accounts/core/widgets/app_brand_logo.dart';
 import 'package:my_accounts/presentation/shared/app_providers.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _backupBusy = false;
+  bool _restoreBusy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final settings = ref.watch(settingsControllerProvider);
     final controller = ref.read(settingsControllerProvider.notifier);
 
@@ -48,6 +58,34 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 14),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(LucideIcons.database),
+                  title: const Text('إنشاء نسخة احتياطية'),
+                  subtitle: const Text(
+                    'ينصح بحفظ النسخة خارج الجهاز (Drive / USB / Telegram Saved).',
+                  ),
+                  trailing: FilledButton(
+                    onPressed: _backupBusy ? null : _createBackup,
+                    child: Text(_backupBusy ? 'جارٍ...' : 'نسخ'),
+                  ),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(LucideIcons.download),
+                  title: const Text('استعادة نسخة احتياطية'),
+                  subtitle: const Text('ستستبدل البيانات الحالية بالكامل.'),
+                  trailing: FilledButton(
+                    onPressed: _restoreBusy ? null : _restoreBackup,
+                    child: Text(_restoreBusy ? 'جارٍ...' : 'استعادة'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
           const Card(
             child: ListTile(
               leading: Icon(LucideIcons.languages),
@@ -71,5 +109,72 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _createBackup() async {
+    setState(() => _backupBusy = true);
+    try {
+      final path = await ref.read(createBackupUseCaseProvider).execute();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تم إنشاء النسخة في: $path')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _backupBusy = false);
+    }
+  }
+
+  Future<void> _restoreBackup() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('تأكيد الاستعادة'),
+        content: const Text(
+          'سيتم استبدال بيانات التطبيق الحالية بالكامل. هل تريد المتابعة؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('متابعة'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['db'],
+      allowMultiple: false,
+    );
+    final filePath = result?.files.single.path;
+    if (filePath == null || filePath.trim().isEmpty) return;
+
+    setState(() => _restoreBusy = true);
+    try {
+      await ref.read(restoreBackupUseCaseProvider).execute(filePath);
+      await ref.read(authControllerProvider.notifier).load();
+      await ref.read(debtControllerProvider.notifier).refresh();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تمت الاستعادة بنجاح')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _restoreBusy = false);
+    }
   }
 }

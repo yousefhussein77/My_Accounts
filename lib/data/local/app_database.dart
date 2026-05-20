@@ -9,9 +9,13 @@ class AppDatabase {
   static const _dbName = 'my_accounts.db';
   static const _dbVersion = 5;
 
+  Future<String> databasePath() async {
+    return join(await getDatabasesPath(), _dbName);
+  }
+
   Future<Database> get database async {
     if (_database != null) return _database!;
-    final path = join(await getDatabasesPath(), _dbName);
+    final path = await databasePath();
     _database = await openDatabase(
       path,
       version: _dbVersion,
@@ -89,6 +93,12 @@ class AppDatabase {
       },
     );
     return _database!;
+  }
+
+  Future<void> close() async {
+    if (_database == null) return;
+    await _database!.close();
+    _database = null;
   }
 
   static Future<void> _createIndexes(Database db) async {
