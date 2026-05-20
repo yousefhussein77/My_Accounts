@@ -19,6 +19,8 @@ class TransactionCard extends StatelessWidget {
     final isDebt = transaction.type == DebtTransactionType.debt;
     final color = isDebt ? colors.error : colors.primary;
     final label = isDebt ? 'عليك' : 'لك';
+    final dueDate = transaction.dueDate;
+    final isOverdue = transaction.isOverdue;
 
     return Card(
       child: Padding(
@@ -56,9 +58,44 @@ class TransactionCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
+                          color: colors.onSurfaceVariant,
+                        ),
                   ),
+                  if (isDebt && dueDate != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          isOverdue
+                              ? LucideIcons.alertCircle
+                              : LucideIcons.calendarClock,
+                          size: 14,
+                          color: isOverdue
+                              ? colors.error
+                              : colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            isOverdue
+                                ? 'متأخرة منذ ${AppFormatters.date(dueDate)}'
+                                : 'تستحق في ${AppFormatters.date(dueDate)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: isOverdue
+                                      ? colors.error
+                                      : colors.onSurfaceVariant,
+                                  fontWeight: isOverdue
+                                      ? FontWeight.w700
+                                      : null,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

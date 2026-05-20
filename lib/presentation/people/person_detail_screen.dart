@@ -26,6 +26,26 @@ class PersonDetailScreen extends ConsumerWidget {
             onPressed: () => showTransactionFormSheet(context, personId: personId),
             icon: const Icon(LucideIcons.plus),
           ),
+          PopupMenuButton<_PersonAction>(
+            onSelected: (action) {
+              switch (action) {
+                case _PersonAction.delete:
+                  _deletePerson(context, ref);
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: _PersonAction.delete,
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.trash2),
+                    SizedBox(width: 10),
+                    Text('حذف الشخص'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       body: state.when(
@@ -109,29 +129,6 @@ class PersonDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final ok = await showConfirmDialog(
-                    context,
-                    title: 'حذف الشخص؟',
-                    message: 'سيتم حذف الشخص وكل عملياته.',
-                    confirmText: 'حذف',
-                  );
-                  if (!ok) return;
-                  try {
-                    await ref.read(debtControllerProvider.notifier).deletePerson(personId);
-                    if (context.mounted) context.pop();
-                  } catch (error) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppError.message(error))),
-                    );
-                  }
-                },
-                icon: const Icon(LucideIcons.trash2),
-                label: const Text('حذف الشخص'),
-              ),
               const SizedBox(height: 22),
               Text(
                 'العمليات',
@@ -144,9 +141,7 @@ class PersonDetailScreen extends ConsumerWidget {
                 (tx) => Card(
                   child: ListTile(
                     title: Text(tx.type == DebtTransactionType.debt ? 'عليك' : 'لك'),
-                    subtitle: Text(
-                      tx.note.trim().isEmpty ? 'عملية' : tx.note.trim(),
-                    ),
+                    subtitle: Text(_transactionSubtitle(tx)),
                     leading: Icon(
                       tx.type == DebtTransactionType.debt
                           ? LucideIcons.arrowUpRight
@@ -165,4 +160,36 @@ class PersonDetailScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _deletePerson(BuildContext context, WidgetRef ref) async {
+    final ok = await showConfirmDialog(
+      context,
+      title: 'حذف الشخص؟',
+      message: 'سيتم حذف الشخص وكل عملياته.',
+      confirmText: 'حذف',
+    );
+    if (!ok) return;
+    try {
+      await ref.read(debtControllerProvider.notifier).deletePerson(personId);
+      if (context.mounted) context.pop();
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppError.message(error))),
+      );
+    }
+  }
+
+  String _transactionSubtitle(DebtTransaction tx) {
+    final parts = <String>[
+      tx.note.trim().isEmpty ? 'عملية' : tx.note.trim(),
+    ];
+    if (tx.dueDate != null) {
+      final prefix = tx.isOverdue ? 'متأخرة منذ' : 'تستحق في';
+      parts.add('$prefix ${AppFormatters.date(tx.dueDate!)}');
+    }
+    return parts.join(' - ');
+  }
 }
+
+enum _PersonAction { delete }

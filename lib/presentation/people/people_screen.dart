@@ -25,6 +25,7 @@ class PeopleScreen extends ConsumerWidget {
           error: (error, _) => Center(child: Text(error.toString())),
           data: (data) {
             final people = data.visiblePeople;
+            final sortLabel = _sortLabel(data.sort);
             return ListView(
               padding: const EdgeInsets.all(18),
               children: [
@@ -54,9 +55,9 @@ class PeopleScreen extends ConsumerWidget {
                     ),
                     PopupMenuItem(value: PeopleSort.name, child: Text('حسب الاسم')),
                   ],
-                  child: const Chip(
-                    avatar: Icon(LucideIcons.arrowUpDown, size: 18),
-                    label: Text('ترتيب'),
+                  child: Chip(
+                    avatar: const Icon(LucideIcons.arrowUpDown, size: 18),
+                    label: Text('ترتيب: $sortLabel'),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -87,5 +88,13 @@ class PeopleScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _sortLabel(PeopleSort sort) {
+    return switch (sort) {
+      PeopleSort.balance => 'الالتزامات',
+      PeopleSort.recent => 'آخر نشاط',
+      PeopleSort.name => 'الاسم',
+    };
   }
 }

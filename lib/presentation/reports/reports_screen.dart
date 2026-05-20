@@ -40,40 +40,47 @@ class ReportsScreen extends ConsumerWidget {
               return debt > 0 || paid > 0;
             }).toList();
 
+            final metricCards = [
+              MetricCard(
+                title: 'إجمالي عليك',
+                valueChild: CurrencyTotalsView(
+                  totals: debtTotals,
+                  color: colors.error,
+                  compact: true,
+                ),
+                icon: LucideIcons.arrowUpRight,
+                color: colors.error,
+              ),
+              MetricCard(
+                title: 'إجمالي لك',
+                valueChild: CurrencyTotalsView(
+                  totals: paidTotals,
+                  color: colors.primary,
+                  compact: true,
+                ),
+                icon: LucideIcons.arrowDownLeft,
+                color: colors.primary,
+              ),
+            ];
+
             return ListView(
               padding: const EdgeInsets.all(18),
               children: [
                 AppHeader(title: 'التقارير', subtitle: 'ملخص ${AppFormatters.month(now)}'),
                 const SizedBox(height: 16),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.82,
-                  children: [
-                    MetricCard(
-                      title: 'إجمالي عليك',
-                      valueChild: CurrencyTotalsView(
-                        totals: debtTotals,
-                        color: colors.error,
-                        compact: true,
-                      ),
-                      icon: LucideIcons.arrowUpRight,
-                      color: colors.error,
-                    ),
-                    MetricCard(
-                      title: 'إجمالي لك',
-                      valueChild: CurrencyTotalsView(
-                        totals: paidTotals,
-                        color: colors.primary,
-                        compact: true,
-                      ),
-                      icon: LucideIcons.arrowDownLeft,
-                      color: colors.primary,
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 430;
+                    return GridView.count(
+                      crossAxisCount: isNarrow ? 1 : 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: isNarrow ? 2.6 : 1.08,
+                      children: metricCards,
+                    );
+                  },
                 ),
                 const SizedBox(height: 22),
                 Text(

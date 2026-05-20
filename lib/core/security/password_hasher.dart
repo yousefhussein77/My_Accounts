@@ -34,8 +34,14 @@ class PasswordHasher {
       return false;
     }
 
-    final salt = base64Url.decode(parts[2]);
-    final expected = base64Url.decode(parts[3]);
+    final List<int> salt;
+    final List<int> expected;
+    try {
+      salt = base64Url.decode(parts[2]);
+      expected = base64Url.decode(parts[3]);
+    } on FormatException {
+      return false;
+    }
     final actual = _pbkdf2(password, salt, iterations, expected.length);
     return _constantTimeEquals(actual, expected);
   }

@@ -1,5 +1,6 @@
 import 'package:my_accounts/core/utils/app_error.dart';
 import 'package:my_accounts/core/utils/app_validators.dart';
+import 'package:my_accounts/core/utils/formatters.dart';
 import 'package:my_accounts/domain/models/debt_transaction.dart';
 import 'package:my_accounts/domain/models/money_currency.dart';
 import 'package:my_accounts/presentation/shared/app_providers.dart';
@@ -31,6 +32,7 @@ class _TransactionFormState extends ConsumerState<_TransactionForm> {
   DebtTransactionType _type = DebtTransactionType.debt;
   MoneyCurrency _currency = MoneyCurrency.yer;
   String? _personId;
+  DateTime? _dueDate;
 
   @override
   void initState() {
@@ -111,8 +113,12 @@ class _TransactionFormState extends ConsumerState<_TransactionForm> {
                       ),
                     ],
                     selected: {_type},
-                    onSelectionChanged: (value) =>
-                        setState(() => _type = value.first),
+                    onSelectionChanged: (value) => setState(() {
+                      _type = value.first;
+                      if (_type == DebtTransactionType.payment) {
+                        _dueDate = null;
+                      }
+                    }),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -152,20 +158,49 @@ class _TransactionFormState extends ConsumerState<_TransactionForm> {
                       labelText: 'ملاحظة (اختياري)',
                     ),
                   ),
+                  if (_type == DebtTransactionType.debt) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _pickDueDate,
+                      icon: const Icon(LucideIcons.calendarClock),
+                      label: Text(
+                        _dueDate == null
+                            ? 'تحديد تاريخ الاستحقاق'
+                            : 'الاستحقاق: ${AppFormatters.date(_dueDate!)}',
+                      ),
+                    ),
+                    if (_dueDate != null)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () => setState(() => _dueDate = null),
+                          icon: const Icon(LucideIcons.x),
+                          label: const Text('إزالة التاريخ'),
+                        ),
+                      ),
+                  ],
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     onPressed: () async {
-                      if (!_formKey.currentState!.validate() || _personId == null) {
+                      if (!_formKey.currentState!.validate() ||
+                          _personId == null) {
                         return;
                       }
                       try {
-                        await ref.read(debtControllerProvider.notifier).addTransaction(
+                        await ref
+                            .read(debtControllerProvider.notifier)
+                            .addTransaction(
                               personId: _personId!,
                               type: _type,
                               amount: double.parse(_amount.text.trim()),
                               currency: _currency,
-                              title: _type == DebtTransactionType.debt ? 'عليك' : 'لك',
+                              title: _type == DebtTransactionType.debt
+                                  ? 'عليك'
+                                  : 'لك',
                               note: _note.text.trim(),
+                              dueDate: _type == DebtTransactionType.debt
+                                  ? _dueDate
+                                  : null,
                             );
                         if (!context.mounted) return;
                         Navigator.pop(context);
@@ -189,5 +224,19 @@ class _TransactionFormState extends ConsumerState<_TransactionForm> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickDueDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dueDate ?? today,
+      firstDate: today,
+      lastDate: DateTime(now.year + 10, now.month, now.day),
+      locale: const Locale('ar'),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _dueDate = picked);
   }
 }

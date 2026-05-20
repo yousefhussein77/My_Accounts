@@ -25,10 +25,13 @@ class DebtTransaction {
   final DateTime date;
   final DateTime? dueDate;
 
-  bool get isOverdue =>
-      type == DebtTransactionType.debt &&
-      dueDate != null &&
-      dueDate!.isBefore(DateTime.now());
+  bool get isOverdue {
+    if (type != DebtTransactionType.debt || dueDate == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dueDay = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
+    return dueDay.isBefore(today);
+  }
 
   Map<String, Object?> toMap() => {
         'id': id,

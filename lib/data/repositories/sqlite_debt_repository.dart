@@ -96,7 +96,10 @@ class SqliteDebtRepository implements DebtRepository {
   }
 
   @override
-  Future<List<DebtTransaction>> transactions(String userId, {String? personId}) async {
+  Future<List<DebtTransaction>> transactions(
+    String userId, {
+    String? personId,
+  }) async {
     final db = await _database.database;
     final where = personId == null
         ? 'owner_user_id = ?'
@@ -111,6 +114,19 @@ class SqliteDebtRepository implements DebtRepository {
       orderBy: 'date DESC',
     );
     return rows.map(DebtTransaction.fromMap).toList();
+  }
+
+  @override
+  Future<bool> personBelongsToUser(String userId, String personId) async {
+    final db = await _database.database;
+    final rows = await db.query(
+      'people',
+      columns: ['id'],
+      where: 'id = ? AND owner_user_id = ?',
+      whereArgs: [personId, userId],
+      limit: 1,
+    );
+    return rows.isNotEmpty;
   }
 
   @override

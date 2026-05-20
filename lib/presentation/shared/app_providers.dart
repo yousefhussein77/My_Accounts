@@ -12,6 +12,7 @@ import 'package:my_accounts/domain/repositories/auth_repository.dart';
 import 'package:my_accounts/domain/repositories/debt_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -116,10 +117,11 @@ class PinController extends StateNotifier<PinState> {
   static const _pinLockedUntilKey = 'app_pin_locked_until';
   static const _maxFailedAttempts = 5;
   static const _lockDuration = Duration(seconds: 60);
+  static const _secureStorage = FlutterSecureStorage();
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final pin = prefs.getString(_pinKey);
+    final pin = await _readPinHash(prefs);
     final lockedUntilRaw = prefs.getString(_pinLockedUntilKey);
     final lockedUntil = lockedUntilRaw == null
         ? null
@@ -143,7 +145,8 @@ class PinController extends StateNotifier<PinState> {
 
   Future<void> setPin(String pin) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_pinKey, PasswordHasher.hash(pin));
+    await _secureStorage.write(key: _pinKey, value: PasswordHasher.hash(pin));
+    await prefs.remove(_pinKey);
     await prefs.setInt(_pinAttemptsKey, 0);
     await prefs.remove(_pinLockedUntilKey);
     state = state.copyWith(
@@ -157,7 +160,7 @@ class PinController extends StateNotifier<PinState> {
 
   Future<bool> verify(String pin) async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_pinKey) ?? '';
+    final saved = await _readPinHash(prefs) ?? '';
     final lockedUntilRaw = prefs.getString(_pinLockedUntilKey);
     final lockedUntil = lockedUntilRaw == null
         ? null
@@ -179,7 +182,11 @@ class PinController extends StateNotifier<PinState> {
       } else {
         ok = saved == pin;
         if (ok) {
-          await prefs.setString(_pinKey, PasswordHasher.hash(pin));
+          await _secureStorage.write(
+            key: _pinKey,
+            value: PasswordHasher.hash(pin),
+          );
+          await prefs.remove(_pinKey);
         }
       }
     }
@@ -217,6 +224,7 @@ class PinController extends StateNotifier<PinState> {
 
   Future<void> clearPin() async {
     final prefs = await SharedPreferences.getInstance();
+    await _secureStorage.delete(key: _pinKey);
     await prefs.remove(_pinKey);
     await prefs.remove(_pinLockedUntilKey);
     await prefs.setInt(_pinAttemptsKey, 0);
@@ -233,6 +241,18 @@ class PinController extends StateNotifier<PinState> {
     if (state.hasPin) {
       state = state.copyWith(unlocked: false);
     }
+  }
+
+  Future<String?> _readPinHash(SharedPreferences prefs) async {
+    final securePin = await _secureStorage.read(key: _pinKey);
+    if (securePin != null && securePin.isNotEmpty) return securePin;
+
+    final legacyPin = prefs.getString(_pinKey);
+    if (legacyPin == null || legacyPin.isEmpty) return null;
+
+    await _secureStorage.write(key: _pinKey, value: legacyPin);
+    await prefs.remove(_pinKey);
+    return legacyPin;
   }
 }
 
@@ -444,10 +464,16 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
     required MoneyCurrency currency,
     required String title,
     String note = '',
+    DateTime? dueDate,
   }) async {
     final userId = _currentUserId();
     if (userId == null) {
       throw Exception('يجب تسجيل الدخول أولاً');
+    }
+    final personAllowed =
+        await _repository.personBelongsToUser(userId, personId);
+    if (!personAllowed) {
+      throw Exception('لا يمكن تسجيل عملية لشخص غير تابع لحسابك');
     }
     await _repository.saveTransaction(userId, DebtTransaction(
       id: _uuid.v4(),
@@ -458,7 +484,7 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
       title: title,
       note: note,
       date: DateTime.now(),
-      dueDate: null,
+      dueDate: dueDate,
     ));
 
     await refresh();

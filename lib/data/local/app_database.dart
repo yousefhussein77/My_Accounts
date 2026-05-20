@@ -7,13 +7,14 @@ class AppDatabase {
   static final AppDatabase instance = AppDatabase._();
   Database? _database;
   static const _dbName = 'my_accounts.db';
+  static const _dbVersion = 5;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
     final path = join(await getDatabasesPath(), _dbName);
     _database = await openDatabase(
       path,
-      version: 4,
+      version: _dbVersion,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users (
@@ -59,6 +60,7 @@ class AppDatabase {
             is_read INTEGER NOT NULL DEFAULT 0
           )
         ''');
+        await _createIndexes(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -78,11 +80,26 @@ class AppDatabase {
             "ALTER TABLE debt_transactions ADD COLUMN currency TEXT NOT NULL DEFAULT 'yer'",
           );
         }
+        if (oldVersion < 5) {
+          await _createIndexes(db);
+        }
       },
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
     );
     return _database!;
+  }
+
+  static Future<void> _createIndexes(Database db) async {
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_people_owner ON people(owner_user_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_transactions_owner ON debt_transactions(owner_user_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_transactions_person ON debt_transactions(person_id)',
+    );
   }
 }

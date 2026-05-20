@@ -1,4 +1,5 @@
 import 'package:my_accounts/core/widgets/app_brand_logo.dart';
+import 'package:my_accounts/core/widgets/fluid_background.dart';
 import 'package:flutter/material.dart';
 
 class AuthFormShell extends StatelessWidget {
@@ -19,31 +20,7 @@ class AuthFormShell extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: const Alignment(0, -0.75),
-                  radius: 1.2,
-                  colors: [
-                    colors.primary.withOpacity(0.12),
-                    colors.surface,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Align(
-            alignment: const Alignment(0, -1.05),
-            child: Container(
-              width: 520,
-              height: 520,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors.primary.withOpacity(0.05),
-              ),
-            ),
-          ),
+          const Positioned.fill(child: FluidBackground(intensity: 0.9)),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(

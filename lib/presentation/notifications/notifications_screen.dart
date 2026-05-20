@@ -12,7 +12,7 @@ class NotificationsScreen extends StatelessWidget {
       body: const AppEmptyState(
         icon: LucideIcons.bellOff,
         title: 'لا توجد تنبيهات',
-        message: 'التطبيق يعمل الآن بدون نظام استحقاق.',
+        message: 'لا توجد عمليات مستحقة أو متأخرة حاليًا.',
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:my_accounts/core/constants/app_constants.dart';
 import 'package:my_accounts/core/utils/app_error.dart';
 import 'package:my_accounts/core/widgets/app_brand_logo.dart';
+import 'package:my_accounts/core/widgets/fluid_background.dart';
 import 'package:my_accounts/presentation/shared/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -52,31 +53,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: const Alignment(0, -0.35),
-                  radius: 1.05,
-                  colors: [
-                    colors.primary.withOpacity(0.16),
-                    colors.surface,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Align(
-            alignment: const Alignment(0, -0.62),
-            child: Container(
-              width: 360,
-              height: 360,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors.primary.withOpacity(0.07),
-              ),
-            ),
-          ),
+          const Positioned.fill(child: FluidBackground(intensity: 1.15)),
           Center(
             child: const AppBrandLogo(size: 238)
                 .animate()
