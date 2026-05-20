@@ -153,6 +153,11 @@ class LocalBackupService {
 
     final path = join(backupDir.path, _buildPreRestoreBackupFileName());
     await dbFile.copy(path);
+    try {
+      await _cleanupOldDefaultBackups(backupDir, keepPath: path);
+    } catch (_) {
+      // The safety copy was created; cleanup should not block restore.
+    }
   }
 
   Future<void> _validateBackupSchema(String backupPath) async {
@@ -265,8 +270,7 @@ class LocalBackupService {
       if (entity is! File) continue;
 
       final name = basename(entity.path).toLowerCase();
-      final isBackup = name.startsWith('my_accounts_backup_') &&
-          (name.endsWith(_plainExt) || name.endsWith(_encryptedExt));
+      final isBackup = _isManagedBackupFile(name);
       if (isBackup) {
         files.add(entity);
       }
@@ -282,6 +286,14 @@ class LocalBackupService {
       if (normalize(absolute(file.path)) == keep) continue;
       await file.delete();
     }
+  }
+
+  bool _isManagedBackupFile(String fileName) {
+    final hasSupportedExtension =
+        fileName.endsWith(_plainExt) || fileName.endsWith(_encryptedExt);
+    final hasManagedPrefix = fileName.startsWith('my_accounts_backup_') ||
+        fileName.startsWith('my_accounts_pre_restore_');
+    return hasManagedPrefix && hasSupportedExtension;
   }
 
   String _buildBackupFileName({required bool encrypted}) {
