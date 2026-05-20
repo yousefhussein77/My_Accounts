@@ -88,6 +88,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 10),
+          const _BackupGuidanceCard(),
           if (backupMetaText != null) ...[
             const SizedBox(height: 10),
             Card(
@@ -276,5 +278,72 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     final atText = DateFormat('yyyy/MM/dd - HH:mm', 'ar').format(at);
     return '$atText\n$path';
+  }
+}
+
+class _BackupGuidanceCard extends StatelessWidget {
+  const _BackupGuidanceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.cloud_upload_outlined),
+                const SizedBox(width: 10),
+                Text(
+                  'إرشادات النسخ الاحتياطي',
+                  style: textTheme.titleMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const _BackupTip(
+              icon: Icons.drive_file_move_outline,
+              text: 'انقل النسخة إلى Google Drive أو USB أو جهاز آخر.',
+            ),
+            const SizedBox(height: 8),
+            const _BackupTip(
+              icon: Icons.lock_outline,
+              text: 'استخدم كلمة مرور قوية للنسخ المهمة ولا تفقدها.',
+            ),
+            const SizedBox(height: 8),
+            const _BackupTip(
+              icon: Icons.restore_outlined,
+              text: 'جرّب الاستعادة فقط من ملف تثق به، لأن البيانات الحالية ستستبدل.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BackupTip extends StatelessWidget {
+  const _BackupTip({
+    required this.icon,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18),
+        const SizedBox(width: 10),
+        Expanded(child: Text(text)),
+      ],
+    );
   }
 }
