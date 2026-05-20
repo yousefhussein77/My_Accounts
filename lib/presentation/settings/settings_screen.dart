@@ -4,6 +4,7 @@ import 'package:my_accounts/presentation/shared/app_providers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -22,6 +23,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final ref = this.ref;
     final settings = ref.watch(settingsControllerProvider);
     final controller = ref.read(settingsControllerProvider.notifier);
+    final backupMetaText = _buildBackupMetaText(settings);
 
     return Scaffold(
       appBar: AppBar(
@@ -85,6 +87,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
+          if (backupMetaText != null) ...[
+            const SizedBox(height: 10),
+            Card(
+              child: ListTile(
+                leading: const Icon(LucideIcons.clock3),
+                title: const Text('آخر نسخة احتياطية'),
+                subtitle: Text(backupMetaText),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           const Card(
             child: ListTile(
@@ -125,6 +137,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       final path = await ref.read(createBackupUseCaseProvider).execute(
             password: password.isEmpty ? null : password,
+          );
+      await ref.read(settingsControllerProvider.notifier).setLastBackupMeta(
+            at: DateTime.now(),
+            path: path,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -242,5 +258,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     controller.dispose();
     return result;
+  }
+
+  String? _buildBackupMetaText(AppSettings settings) {
+    final at = settings.lastBackupAt;
+    final path = settings.lastBackupPath;
+    if (at == null || path == null || path.trim().isEmpty) return null;
+
+    final atText = DateFormat('yyyy/MM/dd - HH:mm', 'ar').format(at);
+    return '$atText\n$path';
   }
 }

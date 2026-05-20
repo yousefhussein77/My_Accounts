@@ -294,17 +294,34 @@ class AppSettings {
     this.themeMode = ThemeMode.light,
     this.language = 'العربية',
     this.reminderDays = 3,
+    this.lastBackupAt,
+    this.lastBackupPath,
   });
 
   final ThemeMode themeMode;
   final String language;
   final int reminderDays;
+  final DateTime? lastBackupAt;
+  final String? lastBackupPath;
 
-  AppSettings copyWith({ThemeMode? themeMode, String? language, int? reminderDays}) {
+  AppSettings copyWith({
+    ThemeMode? themeMode,
+    String? language,
+    int? reminderDays,
+    DateTime? lastBackupAt,
+    String? lastBackupPath,
+    bool clearBackupMeta = false,
+  }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
       language: language ?? this.language,
       reminderDays: reminderDays ?? this.reminderDays,
+      lastBackupAt: clearBackupMeta
+          ? null
+          : (lastBackupAt ?? this.lastBackupAt),
+      lastBackupPath: clearBackupMeta
+          ? null
+          : (lastBackupPath ?? this.lastBackupPath),
     );
   }
 }
@@ -316,14 +333,20 @@ class SettingsController extends StateNotifier<AppSettings> {
 
   static const _themeKey = 'theme_mode';
   static const _reminderKey = 'reminder_days';
+  static const _lastBackupAtKey = 'last_backup_at';
+  static const _lastBackupPathKey = 'last_backup_path';
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final themeName = prefs.getString(_themeKey) ?? ThemeMode.light.name;
     final mode = themeName == ThemeMode.dark.name ? ThemeMode.dark : ThemeMode.light;
+    final backupAtRaw = prefs.getString(_lastBackupAtKey);
+    final backupAt = backupAtRaw == null ? null : DateTime.tryParse(backupAtRaw);
     state = state.copyWith(
       themeMode: mode,
       reminderDays: prefs.getInt(_reminderKey) ?? 3,
+      lastBackupAt: backupAt,
+      lastBackupPath: prefs.getString(_lastBackupPathKey),
     );
   }
 
@@ -337,6 +360,16 @@ class SettingsController extends StateNotifier<AppSettings> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_reminderKey, days);
     state = state.copyWith(reminderDays: days);
+  }
+
+  Future<void> setLastBackupMeta({
+    required DateTime at,
+    required String path,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastBackupAtKey, at.toIso8601String());
+    await prefs.setString(_lastBackupPathKey, path);
+    state = state.copyWith(lastBackupAt: at, lastBackupPath: path);
   }
 }
 
