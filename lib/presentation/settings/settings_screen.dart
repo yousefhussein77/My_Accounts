@@ -31,6 +31,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final controller = ref.read(settingsControllerProvider.notifier);
     final backupReminderText = _buildBackupReminderText(settings);
     final backupMetaText = _buildBackupMetaText(settings);
+    final restoreMetaText = _buildRestoreMetaText(settings);
 
     return Scaffold(
       appBar: AppBar(
@@ -110,6 +111,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 leading: const Icon(LucideIcons.clock3),
                 title: const Text('آخر نسخة احتياطية'),
                 subtitle: Text(backupMetaText),
+              ),
+            ),
+          ],
+          if (restoreMetaText != null) ...[
+            const SizedBox(height: 10),
+            Card(
+              child: ListTile(
+                leading: const Icon(LucideIcons.history),
+                title: const Text('آخر استعادة'),
+                subtitle: Text(restoreMetaText),
               ),
             ),
           ],
@@ -264,6 +275,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             filePath,
             password: password,
           );
+      await ref.read(settingsControllerProvider.notifier).setLastRestoreMeta(
+            at: DateTime.now(),
+            path: filePath,
+          );
       await ref.read(authControllerProvider.notifier).load();
       await ref.read(debtControllerProvider.notifier).refresh();
       if (!mounted) return;
@@ -412,6 +427,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     final atText = DateFormat('yyyy/MM/dd - HH:mm', 'ar').format(at);
     return '$atText\n$path';
+  }
+
+  String? _buildRestoreMetaText(AppSettings settings) {
+    final at = settings.lastRestoreAt;
+    final path = settings.lastRestorePath;
+    if (at == null || path == null || path.trim().isEmpty) return null;
+
+    final atText = DateFormat('yyyy/MM/dd - HH:mm', 'ar').format(at);
+    return '$atText\n${p.basename(path)}';
   }
 
   String? _buildBackupReminderText(AppSettings settings) {

@@ -296,6 +296,8 @@ class AppSettings {
     this.reminderDays = 3,
     this.lastBackupAt,
     this.lastBackupPath,
+    this.lastRestoreAt,
+    this.lastRestorePath,
   });
 
   final ThemeMode themeMode;
@@ -303,6 +305,8 @@ class AppSettings {
   final int reminderDays;
   final DateTime? lastBackupAt;
   final String? lastBackupPath;
+  final DateTime? lastRestoreAt;
+  final String? lastRestorePath;
 
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -310,6 +314,8 @@ class AppSettings {
     int? reminderDays,
     DateTime? lastBackupAt,
     String? lastBackupPath,
+    DateTime? lastRestoreAt,
+    String? lastRestorePath,
     bool clearBackupMeta = false,
   }) {
     return AppSettings(
@@ -322,6 +328,8 @@ class AppSettings {
       lastBackupPath: clearBackupMeta
           ? null
           : (lastBackupPath ?? this.lastBackupPath),
+      lastRestoreAt: lastRestoreAt ?? this.lastRestoreAt,
+      lastRestorePath: lastRestorePath ?? this.lastRestorePath,
     );
   }
 }
@@ -335,6 +343,8 @@ class SettingsController extends StateNotifier<AppSettings> {
   static const _reminderKey = 'reminder_days';
   static const _lastBackupAtKey = 'last_backup_at';
   static const _lastBackupPathKey = 'last_backup_path';
+  static const _lastRestoreAtKey = 'last_restore_at';
+  static const _lastRestorePathKey = 'last_restore_path';
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -342,11 +352,16 @@ class SettingsController extends StateNotifier<AppSettings> {
     final mode = themeName == ThemeMode.dark.name ? ThemeMode.dark : ThemeMode.light;
     final backupAtRaw = prefs.getString(_lastBackupAtKey);
     final backupAt = backupAtRaw == null ? null : DateTime.tryParse(backupAtRaw);
+    final restoreAtRaw = prefs.getString(_lastRestoreAtKey);
+    final restoreAt =
+        restoreAtRaw == null ? null : DateTime.tryParse(restoreAtRaw);
     state = state.copyWith(
       themeMode: mode,
       reminderDays: prefs.getInt(_reminderKey) ?? 3,
       lastBackupAt: backupAt,
       lastBackupPath: prefs.getString(_lastBackupPathKey),
+      lastRestoreAt: restoreAt,
+      lastRestorePath: prefs.getString(_lastRestorePathKey),
     );
   }
 
@@ -370,6 +385,16 @@ class SettingsController extends StateNotifier<AppSettings> {
     await prefs.setString(_lastBackupAtKey, at.toIso8601String());
     await prefs.setString(_lastBackupPathKey, path);
     state = state.copyWith(lastBackupAt: at, lastBackupPath: path);
+  }
+
+  Future<void> setLastRestoreMeta({
+    required DateTime at,
+    required String path,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastRestoreAtKey, at.toIso8601String());
+    await prefs.setString(_lastRestorePathKey, path);
+    state = state.copyWith(lastRestoreAt: at, lastRestorePath: path);
   }
 }
 
