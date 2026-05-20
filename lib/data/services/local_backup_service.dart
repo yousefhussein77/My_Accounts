@@ -163,6 +163,8 @@ class LocalBackupService {
       if (!tableNames.containsAll(required)) {
         throw Exception('ملف النسخة غير صالح للاستعادة');
       }
+
+      await _validateRequiredColumns(db);
     } on DatabaseException {
       throw Exception('الملف المختار ليس نسخة احتياطية صالحة');
     } finally {
@@ -176,6 +178,48 @@ class LocalBackupService {
     if (value?.toString().toLowerCase() != 'ok') {
       throw Exception('ملف النسخة تالف ولا يمكن استعادته');
     }
+  }
+
+  Future<void> _validateRequiredColumns(Database db) async {
+    const requiredColumns = {
+      'users': {'id', 'name', 'email', 'password', 'created_at'},
+      'people': {
+        'id',
+        'owner_user_id',
+        'name',
+        'phone',
+        'note',
+        'is_favorite',
+        'created_at',
+      },
+      'debt_transactions': {
+        'id',
+        'owner_user_id',
+        'person_id',
+        'type',
+        'amount',
+        'currency',
+        'title',
+        'note',
+        'date',
+        'due_date',
+      },
+    };
+
+    for (final entry in requiredColumns.entries) {
+      final columns = await _tableColumns(db, entry.key);
+      if (!columns.containsAll(entry.value)) {
+        throw Exception('ملف النسخة غير متوافق مع إصدار التطبيق الحالي');
+      }
+    }
+  }
+
+  Future<Set<String>> _tableColumns(Database db, String tableName) async {
+    final rows = await db.rawQuery('PRAGMA table_info($tableName)');
+    return rows
+        .map((row) => (row['name'] as String?) ?? '')
+        .where((name) => name.isNotEmpty)
+        .toSet();
   }
 
   Future<void> _validateBackupInput(String backupFilePath, File backupFile) async {
