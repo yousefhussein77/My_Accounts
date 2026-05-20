@@ -4,17 +4,16 @@ import 'package:my_accounts/data/repositories/sqlite_debt_repository.dart';
 import 'package:my_accounts/core/security/password_hasher.dart';
 import 'package:my_accounts/domain/models/app_notification.dart';
 import 'package:my_accounts/domain/models/app_user.dart';
-import 'package:my_accounts/domain/models/debt_person.dart';
 import 'package:my_accounts/domain/models/debt_transaction.dart';
 import 'package:my_accounts/domain/models/money_currency.dart';
 import 'package:my_accounts/domain/models/person_summary.dart';
 import 'package:my_accounts/domain/repositories/auth_repository.dart';
 import 'package:my_accounts/domain/repositories/debt_repository.dart';
+import 'package:my_accounts/domain/usecases/usecases.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) => AppDatabase.instance);
 
@@ -24,6 +23,22 @@ final authRepositoryProvider = Provider<AuthRepository>(
 
 final debtRepositoryProvider = Provider<DebtRepository>(
   (ref) => SqliteDebtRepository(ref.watch(databaseProvider)),
+);
+
+final addTransactionUseCaseProvider = Provider<AddTransactionUseCase>(
+  (ref) => AddTransactionUseCase(ref.watch(debtRepositoryProvider)),
+);
+
+final savePersonUseCaseProvider = Provider<SavePersonUseCase>(
+  (ref) => SavePersonUseCase(ref.watch(debtRepositoryProvider)),
+);
+
+final deletePersonUseCaseProvider = Provider<DeletePersonUseCase>(
+  (ref) => DeletePersonUseCase(ref.watch(debtRepositoryProvider)),
+);
+
+final deleteTransactionUseCaseProvider = Provider<DeleteTransactionUseCase>(
+  (ref) => DeleteTransactionUseCase(ref.watch(debtRepositoryProvider)),
 );
 
 final authControllerProvider =
@@ -314,7 +329,14 @@ class SettingsController extends StateNotifier<AppSettings> {
 
 final debtControllerProvider =
     StateNotifierProvider<DebtController, AsyncValue<DebtState>>((ref) {
-  return DebtController(ref.watch(debtRepositoryProvider), ref);
+  return DebtController(
+    ref.watch(debtRepositoryProvider),
+    ref.watch(addTransactionUseCaseProvider),
+    ref.watch(savePersonUseCaseProvider),
+    ref.watch(deletePersonUseCaseProvider),
+    ref.watch(deleteTransactionUseCaseProvider),
+    ref,
+  );
 });
 
 class DebtState {
@@ -373,14 +395,24 @@ class DebtState {
 enum PeopleSort { balance, recent, name }
 
 class DebtController extends StateNotifier<AsyncValue<DebtState>> {
-  DebtController(this._repository, this._ref)
+  DebtController(
+    this._repository,
+    this._addTransaction,
+    this._savePerson,
+    this._deletePerson,
+    this._deleteTransaction,
+    this._ref,
+  )
       : super(const AsyncValue.loading()) {
     refresh();
   }
 
   final DebtRepository _repository;
+  final AddTransactionUseCase _addTransaction;
+  final SavePersonUseCase _savePerson;
+  final DeletePersonUseCase _deletePerson;
+  final DeleteTransactionUseCase _deleteTransaction;
   final Ref _ref;
-  final _uuid = const Uuid();
   
   String? _currentUserId() => _ref.read(authControllerProvider).valueOrNull?.id;
 
@@ -434,16 +466,16 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
         .map((item) => item.person)
         .toList();
 
-    await _repository.savePerson(userId, DebtPerson(
-      id: id ?? _uuid.v4(),
-      name: name,
-      phone: phone,
-      note: note,
-      isFavorite: existing == null || existing.isEmpty ? false : existing.first.isFavorite,
-      createdAt: existing == null || existing.isEmpty
-          ? DateTime.now()
-          : existing.first.createdAt,
-    ));
+    await _savePerson.execute(
+      SavePersonInput(
+        userId: userId,
+        personId: id,
+        name: name,
+        phone: phone,
+        note: note,
+        existingPerson: existing == null || existing.isEmpty ? null : existing.first,
+      ),
+    );
 
     await refresh();
   }
@@ -453,7 +485,7 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
     if (userId == null) {
       throw Exception('يجب تسجيل الدخول أولاً');
     }
-    await _repository.deletePerson(userId, id);
+    await _deletePerson.execute(userId: userId, personId: id);
     await refresh();
   }
 
@@ -470,22 +502,18 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
     if (userId == null) {
       throw Exception('يجب تسجيل الدخول أولاً');
     }
-    final personAllowed =
-        await _repository.personBelongsToUser(userId, personId);
-    if (!personAllowed) {
-      throw Exception('لا يمكن تسجيل عملية لشخص غير تابع لحسابك');
-    }
-    await _repository.saveTransaction(userId, DebtTransaction(
-      id: _uuid.v4(),
-      personId: personId,
-      type: type,
-      amount: amount,
-      currency: currency,
-      title: title,
-      note: note,
-      date: DateTime.now(),
-      dueDate: dueDate,
-    ));
+    await _addTransaction.execute(
+      AddTransactionInput(
+        userId: userId,
+        personId: personId,
+        type: type,
+        amount: amount,
+        currency: currency,
+        title: title,
+        note: note,
+        dueDate: dueDate,
+      ),
+    );
 
     await refresh();
   }
@@ -495,7 +523,7 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
     if (userId == null) {
       throw Exception('يجب تسجيل الدخول أولاً');
     }
-    await _repository.deleteTransaction(userId, id);
+    await _deleteTransaction.execute(userId: userId, transactionId: id);
     await refresh();
   }
 

@@ -44,6 +44,23 @@ lib/
   presentation/    الشاشات و Riverpod providers
 ```
 
+## المعمارية المعتمدة
+
+المشروع يعتمد الآن نمط MVC بشكل تدريجي وواضح:
+
+- `models` عبر `lib/mvc/models/models.dart`
+- `views` عبر `lib/mvc/views/views.dart`
+- `controllers` عبر `lib/mvc/controllers/controllers.dart`
+- `services` عبر `lib/mvc/services/services.dart`
+
+نقطة الدخول الموحدة:
+
+- `lib/mvc/app_mvc.dart`
+
+دليل التطبيق العملي:
+
+- `lib/mvc/MVC_GUIDE.md`
+
 ## الحزم
 
 - `flutter_riverpod`
