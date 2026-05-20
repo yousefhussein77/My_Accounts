@@ -112,9 +112,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _createBackup() async {
+    final password = await _askPassword(
+      title: 'تشفير النسخة (اختياري)',
+      message:
+          'أدخل كلمة مرور لتشفير النسخة، أو اتركها فارغة لإنشاء نسخة عادية.',
+      optional: true,
+    );
+    if (!mounted) return;
+    if (password == null) return;
+
     setState(() => _backupBusy = true);
     try {
-      final path = await ref.read(createBackupUseCaseProvider).execute();
+      final path = await ref.read(createBackupUseCaseProvider).execute(
+            password: password.isEmpty ? null : password,
+          );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('تم إنشاء النسخة في: $path')),
@@ -153,15 +164,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['db'],
+      allowedExtensions: const ['db', 'mabk'],
       allowMultiple: false,
     );
     final filePath = result?.files.single.path;
     if (filePath == null || filePath.trim().isEmpty) return;
 
+    String? password;
+    if (filePath.toLowerCase().endsWith('.mabk')) {
+      password = await _askPassword(
+        title: 'كلمة مرور النسخة',
+        message: 'أدخل كلمة المرور لفك تشفير النسخة واستعادتها.',
+        optional: false,
+      );
+      if (!mounted) return;
+      if (password == null || password.isEmpty) return;
+    }
+
     setState(() => _restoreBusy = true);
     try {
-      await ref.read(restoreBackupUseCaseProvider).execute(filePath);
+      await ref.read(restoreBackupUseCaseProvider).execute(
+            filePath,
+            password: password,
+          );
       await ref.read(authControllerProvider.notifier).load();
       await ref.read(debtControllerProvider.notifier).refresh();
       if (!mounted) return;
@@ -176,5 +201,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } finally {
       if (mounted) setState(() => _restoreBusy = false);
     }
+  }
+
+  Future<String?> _askPassword({
+    required String title,
+    required String message,
+    required bool optional,
+  }) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(message),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: optional ? 'كلمة المرور (اختياري)' : 'كلمة المرور',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('متابعة'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
   }
 }

@@ -5,7 +5,13 @@ class CreateBackupUseCase {
 
   final LocalBackupService _service;
 
-  Future<String> execute({String? directoryPath}) {
-    return _service.createBackup(directoryPath: directoryPath);
+  Future<String> execute({
+    String? directoryPath,
+    String? password,
+  }) {
+    return _service.createBackup(
+      directoryPath: directoryPath,
+      password: password,
+    );
   }
 }
