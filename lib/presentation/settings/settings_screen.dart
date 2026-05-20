@@ -16,6 +16,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  static const _backupCanceled = '__backup_canceled__';
+
   bool _backupBusy = false;
   bool _restoreBusy = false;
 
@@ -136,9 +138,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (!mounted) return;
     if (password == null) return;
 
+    final directoryPath = await _askBackupDirectory();
+    if (!mounted) return;
+    if (directoryPath == _backupCanceled) return;
+
     setState(() => _backupBusy = true);
     try {
       final path = await ref.read(createBackupUseCaseProvider).execute(
+            directoryPath: directoryPath,
             password: password.isEmpty ? null : password,
           );
       await ref.read(settingsControllerProvider.notifier).setLastBackupMeta(
@@ -269,6 +276,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     controller.dispose();
     return result;
+  }
+
+  Future<String?> _askBackupDirectory() async {
+    final shouldChoose = await showDialog<bool?>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('مكان حفظ النسخة'),
+        content: const Text(
+          'يمكن حفظ النسخة في المسار الافتراضي، أو اختيار مجلد خارجي يسهل نقله إلى Drive أو USB.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('افتراضي'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('اختيار مجلد'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldChoose == null) return _backupCanceled;
+    if (!shouldChoose) return null;
+
+    final selectedDirectory = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'اختر مكان حفظ النسخة الاحتياطية',
+    );
+    return selectedDirectory?.trim().isEmpty == true ? null : selectedDirectory;
   }
 
   String? _buildBackupMetaText(AppSettings settings) {
