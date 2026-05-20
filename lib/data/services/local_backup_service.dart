@@ -16,6 +16,7 @@ class LocalBackupService {
   static const _encryptedExt = '.mabk';
   static const _plainExt = '.db';
   static const _maxBackupBytes = 100 * 1024 * 1024; // 100 MB
+  static const _maxDefaultBackups = 10;
 
   Future<String> createBackup({
     String? directoryPath,
@@ -46,6 +47,14 @@ class LocalBackupService {
         final plainBytes = await dbFile.readAsBytes();
         final encryptedBytes = await _encryptBytes(plainBytes, password.trim());
         await File(backupPath).writeAsBytes(encryptedBytes, flush: true);
+      }
+
+      if (directoryPath == null || directoryPath.trim().isEmpty) {
+        try {
+          await _cleanupOldDefaultBackups(backupDir, keepPath: backupPath);
+        } catch (_) {
+          // Backup creation should still succeed if old-file cleanup fails.
+        }
       }
 
       return backupPath;
@@ -177,6 +186,36 @@ class LocalBackupService {
     }
     if (size > _maxBackupBytes) {
       throw Exception('حجم ملف النسخة كبير جدا وغير متوقع');
+    }
+  }
+
+  Future<void> _cleanupOldDefaultBackups(
+    Directory backupDir, {
+    required String keepPath,
+  }) async {
+    final keep = normalize(absolute(keepPath));
+    final files = <File>[];
+
+    await for (final entity in backupDir.list()) {
+      if (entity is! File) continue;
+
+      final name = basename(entity.path).toLowerCase();
+      final isBackup = name.startsWith('my_accounts_backup_') &&
+          (name.endsWith(_plainExt) || name.endsWith(_encryptedExt));
+      if (isBackup) {
+        files.add(entity);
+      }
+    }
+
+    if (files.length <= _maxDefaultBackups) return;
+
+    files.sort((a, b) {
+      return b.lastModifiedSync().compareTo(a.lastModifiedSync());
+    });
+
+    for (final file in files.skip(_maxDefaultBackups)) {
+      if (normalize(absolute(file.path)) == keep) continue;
+      await file.delete();
     }
   }
 
