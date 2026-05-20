@@ -181,6 +181,7 @@ class LocalBackupService {
       }
 
       await _validateRequiredColumns(db);
+      await _validateForeignKeys(db);
     } on DatabaseException {
       throw Exception('الملف المختار ليس نسخة احتياطية صالحة');
     } finally {
@@ -236,6 +237,13 @@ class LocalBackupService {
         .map((row) => (row['name'] as String?) ?? '')
         .where((name) => name.isNotEmpty)
         .toSet();
+  }
+
+  Future<void> _validateForeignKeys(Database db) async {
+    final rows = await db.rawQuery('PRAGMA foreign_key_check');
+    if (rows.isNotEmpty) {
+      throw Exception('ملف النسخة يحتوي على بيانات مرتبطة بشكل غير صالح');
+    }
   }
 
   Future<void> _validateBackupInput(String backupFilePath, File backupFile) async {
