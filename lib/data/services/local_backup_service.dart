@@ -148,6 +148,8 @@ class LocalBackupService {
     Database? db;
     try {
       db = await openDatabase(backupPath, readOnly: true);
+      await _validateDatabaseIntegrity(db);
+
       final rows = await db.rawQuery(
         "SELECT name FROM sqlite_master WHERE type = 'table'",
       );
@@ -165,6 +167,14 @@ class LocalBackupService {
       throw Exception('الملف المختار ليس نسخة احتياطية صالحة');
     } finally {
       await db?.close();
+    }
+  }
+
+  Future<void> _validateDatabaseIntegrity(Database db) async {
+    final result = await db.rawQuery('PRAGMA integrity_check');
+    final value = result.isEmpty ? null : result.first.values.first;
+    if (value?.toString().toLowerCase() != 'ok') {
+      throw Exception('ملف النسخة تالف ولا يمكن استعادته');
     }
   }
 
