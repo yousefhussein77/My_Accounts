@@ -155,6 +155,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
       return;
     }
+    if (password.isNotEmpty) {
+      final confirmation = await _askPassword(
+        title: 'تأكيد كلمة المرور',
+        message: 'أعد إدخال كلمة مرور النسخة المشفرة للتأكد منها.',
+        optional: false,
+      );
+      if (!mounted) return;
+      if (confirmation == null) return;
+      if (confirmation != password) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('كلمتا المرور غير متطابقتين')),
+        );
+        return;
+      }
+    }
 
     final directoryPath = await _askBackupDirectory();
     if (!mounted) return;
