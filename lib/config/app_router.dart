@@ -1,14 +1,4 @@
-import 'package:my_accounts/presentation/auth/forgot_password_screen.dart';
-import 'package:my_accounts/presentation/auth/login_screen.dart';
-import 'package:my_accounts/presentation/auth/pin_lock_screen.dart';
-import 'package:my_accounts/presentation/auth/register_screen.dart';
-import 'package:my_accounts/presentation/notifications/notifications_screen.dart';
-import 'package:my_accounts/presentation/onboarding/onboarding_screen.dart';
-import 'package:my_accounts/presentation/people/person_detail_screen.dart';
-import 'package:my_accounts/presentation/settings/settings_screen.dart';
-import 'package:my_accounts/presentation/shared/app_providers.dart';
-import 'package:my_accounts/presentation/shell/app_shell.dart';
-import 'package:my_accounts/presentation/splash/splash_screen.dart';
+import 'package:my_accounts/mvc/app_mvc.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
