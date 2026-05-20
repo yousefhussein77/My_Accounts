@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
@@ -12,8 +12,10 @@ class LocalBackupService {
   LocalBackupService(this._database);
 
   final AppDatabase _database;
+
   static const _encryptedExt = '.mabk';
   static const _plainExt = '.db';
+  static const _maxBackupBytes = 100 * 1024 * 1024; // 100 MB
 
   Future<String> createBackup({
     String? directoryPath,
@@ -37,6 +39,7 @@ class LocalBackupService {
         encrypted: password != null && password.trim().isNotEmpty,
       );
       final backupPath = join(backupDir.path, fileName);
+
       if (password == null || password.trim().isEmpty) {
         await dbFile.copy(backupPath);
       } else {
@@ -44,6 +47,7 @@ class LocalBackupService {
         final encryptedBytes = await _encryptBytes(plainBytes, password.trim());
         await File(backupPath).writeAsBytes(encryptedBytes, flush: true);
       }
+
       return backupPath;
     } finally {
       await _database.database;
@@ -55,17 +59,17 @@ class LocalBackupService {
     String? password,
   }) async {
     final backupFile = File(backupFilePath);
-    if (!await backupFile.exists()) {
-      throw Exception('ملف النسخة الاحتياطية غير موجود');
-    }
+    await _validateBackupInput(backupFilePath, backupFile);
 
     final isEncrypted = backupFilePath.toLowerCase().endsWith(_encryptedExt);
     String validatedPath = backupFilePath;
     File? tempDecryptedFile;
+
     if (isEncrypted) {
       if (password == null || password.trim().isEmpty) {
         throw Exception('كلمة المرور مطلوبة لاستعادة النسخة المشفرة');
       }
+
       final encryptedBytes = await backupFile.readAsBytes();
       final plainBytes = await _decryptBytes(encryptedBytes, password.trim());
       final tempDir = await getTemporaryDirectory();
@@ -84,12 +88,37 @@ class LocalBackupService {
     await _database.close();
     try {
       final dbPath = await _database.databasePath();
-      final dbFile = File(dbPath);
-      if (await dbFile.exists()) {
-        final rollbackPath = '$dbPath.rollback';
-        await dbFile.copy(rollbackPath);
+      final currentDbPath = normalize(absolute(dbPath));
+      final selectedPath = normalize(absolute(validatedPath));
+      if (currentDbPath == selectedPath) {
+        throw Exception('لا يمكن استعادة نفس قاعدة البيانات الحالية');
       }
-      await File(validatedPath).copy(dbPath);
+
+      final dbFile = File(dbPath);
+      final rollbackFile = File('$dbPath.rollback');
+      var hasRollback = false;
+
+      if (await rollbackFile.exists()) {
+        await rollbackFile.delete();
+      }
+      if (await dbFile.exists()) {
+        await dbFile.copy(rollbackFile.path);
+        hasRollback = true;
+      }
+
+      try {
+        await File(validatedPath).copy(dbPath);
+        await _validateBackupSchema(dbPath);
+      } catch (_) {
+        if (hasRollback && await rollbackFile.exists()) {
+          await rollbackFile.copy(dbPath);
+        }
+        rethrow;
+      } finally {
+        if (await rollbackFile.exists()) {
+          await rollbackFile.delete();
+        }
+      }
     } finally {
       if (tempDecryptedFile != null && await tempDecryptedFile.exists()) {
         await tempDecryptedFile.delete();
@@ -107,11 +136,13 @@ class LocalBackupService {
   }
 
   Future<void> _validateBackupSchema(String backupPath) async {
-    final db = await openDatabase(backupPath, readOnly: true);
+    Database? db;
     try {
+      db = await openDatabase(backupPath, readOnly: true);
       final rows = await db.rawQuery(
         "SELECT name FROM sqlite_master WHERE type = 'table'",
       );
+
       final tableNames = rows
           .map((row) => (row['name'] as String?) ?? '')
           .where((name) => name.isNotEmpty)
@@ -121,8 +152,31 @@ class LocalBackupService {
       if (!tableNames.containsAll(required)) {
         throw Exception('ملف النسخة غير صالح للاستعادة');
       }
+    } on DatabaseException {
+      throw Exception('الملف المختار ليس نسخة احتياطية صالحة');
     } finally {
-      await db.close();
+      await db?.close();
+    }
+  }
+
+  Future<void> _validateBackupInput(String backupFilePath, File backupFile) async {
+    if (!await backupFile.exists()) {
+      throw Exception('ملف النسخة الاحتياطية غير موجود');
+    }
+
+    final normalized = backupFilePath.toLowerCase().trim();
+    final isSupported =
+        normalized.endsWith(_plainExt) || normalized.endsWith(_encryptedExt);
+    if (!isSupported) {
+      throw Exception('امتداد الملف غير مدعوم. اختر ملف db أو mabk');
+    }
+
+    final size = await backupFile.length();
+    if (size <= 0) {
+      throw Exception('ملف النسخة فارغ');
+    }
+    if (size > _maxBackupBytes) {
+      throw Exception('حجم ملف النسخة كبير جدا وغير متوقع');
     }
   }
 

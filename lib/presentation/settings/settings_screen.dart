@@ -1,4 +1,5 @@
 import 'package:my_accounts/core/constants/app_constants.dart';
+import 'package:my_accounts/core/utils/app_error.dart';
 import 'package:my_accounts/core/widgets/app_brand_logo.dart';
 import 'package:my_accounts/presentation/shared/app_providers.dart';
 import 'package:file_picker/file_picker.dart';
@@ -149,7 +150,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
+        SnackBar(content: Text(AppError.message(error))),
       );
     } finally {
       if (mounted) setState(() => _backupBusy = false);
@@ -185,9 +186,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     final filePath = result?.files.single.path;
     if (filePath == null || filePath.trim().isEmpty) return;
+    final lowerPath = filePath.toLowerCase();
+    if (!lowerPath.endsWith('.db') && !lowerPath.endsWith('.mabk')) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('امتداد الملف غير مدعوم')),
+      );
+      return;
+    }
 
     String? password;
-    if (filePath.toLowerCase().endsWith('.mabk')) {
+    if (lowerPath.endsWith('.mabk')) {
       password = await _askPassword(
         title: 'كلمة مرور النسخة',
         message: 'أدخل كلمة المرور لفك تشفير النسخة واستعادتها.',
@@ -212,7 +221,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
+        SnackBar(content: Text(AppError.message(error))),
       );
     } finally {
       if (mounted) setState(() => _restoreBusy = false);
