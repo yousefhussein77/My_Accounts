@@ -4,9 +4,26 @@ import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:my_accounts/data/local/app_database.dart';
+import 'package:my_accounts/domain/models/backup_file_info.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+
+class RestoreBackupResult {
+  const RestoreBackupResult({this.safetyBackupPath});
+
+  final String? safetyBackupPath;
+}
+
+class _PreparedBackup {
+  const _PreparedBackup({
+    required this.validatedPath,
+    this.tempFile,
+  });
+
+  final String validatedPath;
+  final File? tempFile;
+}
 
 class LocalBackupService {
   LocalBackupService(this._database);
@@ -63,39 +80,22 @@ class LocalBackupService {
     }
   }
 
-  Future<void> restoreBackup(
+  Future<RestoreBackupResult> restoreBackup(
     String backupFilePath, {
     String? password,
   }) async {
-    final backupFile = File(backupFilePath);
-    await _validateBackupInput(backupFilePath, backupFile);
+    final prepared = await _prepareBackupForValidation(
+      backupFilePath,
+      password: password,
+    );
+    final validatedPath = prepared.validatedPath;
+    final tempDecryptedFile = prepared.tempFile;
+    String? safetyBackupPath;
 
-    final isEncrypted = backupFilePath.toLowerCase().endsWith(_encryptedExt);
-    String validatedPath = backupFilePath;
-    File? tempDecryptedFile;
-
-    if (isEncrypted) {
-      if (password == null || password.trim().isEmpty) {
-        throw Exception('كلمة المرور مطلوبة لاستعادة النسخة المشفرة');
-      }
-
-      final encryptedBytes = await backupFile.readAsBytes();
-      final plainBytes = await _decryptBytes(encryptedBytes, password.trim());
-      final tempDir = await getTemporaryDirectory();
-      tempDecryptedFile = File(
-        join(
-          tempDir.path,
-          'restore_${DateTime.now().millisecondsSinceEpoch}$_plainExt',
-        ),
-      );
-      await tempDecryptedFile.writeAsBytes(plainBytes, flush: true);
-      validatedPath = tempDecryptedFile.path;
-    }
-
-    await _validateBackupSchema(validatedPath);
-
-    await _database.close();
     try {
+      await _validateBackupSchema(validatedPath);
+
+      await _database.close();
       final dbPath = await _database.databasePath();
       final currentDbPath = normalize(absolute(dbPath));
       final selectedPath = normalize(absolute(validatedPath));
@@ -111,7 +111,7 @@ class LocalBackupService {
         await rollbackFile.delete();
       }
       if (await dbFile.exists()) {
-        await _createPreRestoreBackup(dbFile);
+        safetyBackupPath = await _createPreRestoreBackup(dbFile);
         await dbFile.copy(rollbackFile.path);
         hasRollback = true;
       }
@@ -135,6 +135,108 @@ class LocalBackupService {
       }
       await _database.database;
     }
+    return RestoreBackupResult(safetyBackupPath: safetyBackupPath);
+  }
+
+  Future<void> validateBackup(
+    String backupFilePath, {
+    String? password,
+  }) async {
+    final prepared = await _prepareBackupForValidation(
+      backupFilePath,
+      password: password,
+    );
+    try {
+      await _validateBackupSchema(prepared.validatedPath);
+    } finally {
+      final tempFile = prepared.tempFile;
+      if (tempFile != null && await tempFile.exists()) {
+        await tempFile.delete();
+      }
+    }
+  }
+
+  Future<List<BackupFileInfo>> defaultBackups() async {
+    final backupDir = await _resolveBackupDirectory(null);
+    if (!await backupDir.exists()) return const [];
+
+    final backups = <BackupFileInfo>[];
+    await for (final entity in backupDir.list()) {
+      if (entity is! File) continue;
+
+      final fileName = basename(entity.path);
+      if (!_isManagedBackupFile(fileName.toLowerCase())) continue;
+
+      final stat = await entity.stat();
+      backups.add(
+        BackupFileInfo(
+          path: entity.path,
+          fileName: fileName,
+          modifiedAt: stat.modified,
+          sizeBytes: stat.size,
+          isEncrypted: fileName.toLowerCase().endsWith(_encryptedExt),
+          isSafetyCopy:
+              fileName.toLowerCase().startsWith('my_accounts_pre_restore_'),
+        ),
+      );
+    }
+
+    backups.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
+    return backups;
+  }
+
+  Future<void> deleteDefaultBackup(String backupPath) async {
+    final backupDir = await _resolveBackupDirectory(null);
+    final backupDirPath = normalize(absolute(backupDir.path));
+    final targetPath = normalize(absolute(backupPath));
+
+    if (!isWithin(backupDirPath, targetPath)) {
+      throw Exception('لا يمكن حذف ملف خارج مجلد النسخ الافتراضي');
+    }
+
+    final fileName = basename(targetPath).toLowerCase();
+    if (!_isManagedBackupFile(fileName)) {
+      throw Exception('لا يمكن حذف ملف غير تابع لنسخ التطبيق');
+    }
+
+    final file = File(targetPath);
+    if (!await file.exists()) {
+      throw Exception('ملف النسخة غير موجود');
+    }
+
+    await file.delete();
+  }
+
+  Future<_PreparedBackup> _prepareBackupForValidation(
+    String backupFilePath, {
+    String? password,
+  }) async {
+    final backupFile = File(backupFilePath);
+    await _validateBackupInput(backupFilePath, backupFile);
+
+    final isEncrypted = backupFilePath.toLowerCase().endsWith(_encryptedExt);
+    if (!isEncrypted) {
+      return _PreparedBackup(validatedPath: backupFilePath);
+    }
+
+    if (password == null || password.trim().isEmpty) {
+      throw Exception('كلمة المرور مطلوبة لاستعادة النسخة المشفرة');
+    }
+
+    final encryptedBytes = await backupFile.readAsBytes();
+    final plainBytes = await _decryptBytes(encryptedBytes, password.trim());
+    final tempDir = await getTemporaryDirectory();
+    final tempDecryptedFile = File(
+      join(
+        tempDir.path,
+        'restore_${DateTime.now().millisecondsSinceEpoch}$_plainExt',
+      ),
+    );
+    await tempDecryptedFile.writeAsBytes(plainBytes, flush: true);
+    return _PreparedBackup(
+      validatedPath: tempDecryptedFile.path,
+      tempFile: tempDecryptedFile,
+    );
   }
 
   Future<Directory> _resolveBackupDirectory(String? directoryPath) async {
@@ -145,7 +247,7 @@ class LocalBackupService {
     return Directory(join(appDocDir.path, 'backups'));
   }
 
-  Future<void> _createPreRestoreBackup(File dbFile) async {
+  Future<String> _createPreRestoreBackup(File dbFile) async {
     final backupDir = await _resolveBackupDirectory(null);
     if (!await backupDir.exists()) {
       await backupDir.create(recursive: true);
@@ -158,6 +260,7 @@ class LocalBackupService {
     } catch (_) {
       // The safety copy was created; cleanup should not block restore.
     }
+    return path;
   }
 
   Future<void> _validateBackupSchema(String backupPath) async {

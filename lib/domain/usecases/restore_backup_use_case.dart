@@ -5,7 +5,7 @@ class RestoreBackupUseCase {
 
   final LocalBackupService _service;
 
-  Future<void> execute(
+  Future<RestoreBackupResult> execute(
     String backupFilePath, {
     String? password,
   }) {

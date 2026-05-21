@@ -32,6 +32,12 @@ void main() {
       expect(summary.hasMixedDirection, isTrue);
       expect(summary.exposureScore, 50020);
       expect(summary.isSettled, isFalse);
+      expect(summary.hasActivityIn(MoneyCurrency.yer), isTrue);
+      expect(summary.hasActivityIn(MoneyCurrency.sar), isFalse);
+      expect(summary.activeCurrencies, [
+        MoneyCurrency.yer,
+        MoneyCurrency.usd,
+      ]);
     });
 
     test('calculates progress only for a single debt currency', () {

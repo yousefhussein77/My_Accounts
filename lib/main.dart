@@ -2,6 +2,7 @@ import 'package:my_accounts/config/app_router.dart';
 import 'package:my_accounts/config/app_theme.dart';
 import 'package:my_accounts/core/constants/app_constants.dart';
 import 'package:my_accounts/mvc/app_mvc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,8 +23,10 @@ Future<void> main() async {
     await AppDatabase.instance.database;
     runApp(const ProviderScope(child: MyAccountsApp()));
   }, (error, stackTrace) {
-    debugPrint('Uncaught app error: $error');
-    debugPrintStack(stackTrace: stackTrace);
+    if (!kReleaseMode) {
+      debugPrint('Uncaught app error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   });
 }
 

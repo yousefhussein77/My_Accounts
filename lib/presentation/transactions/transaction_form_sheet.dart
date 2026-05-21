@@ -8,18 +8,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-Future<void> showTransactionFormSheet(BuildContext context, {String? personId}) {
+Future<void> showTransactionFormSheet(
+  BuildContext context, {
+  String? personId,
+  MoneyCurrency? currency,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => _TransactionForm(initialPersonId: personId),
+    builder: (_) => _TransactionForm(
+      initialPersonId: personId,
+      initialCurrency: currency,
+    ),
   );
 }
 
 class _TransactionForm extends ConsumerStatefulWidget {
-  const _TransactionForm({this.initialPersonId});
+  const _TransactionForm({this.initialPersonId, this.initialCurrency});
+
   final String? initialPersonId;
+  final MoneyCurrency? initialCurrency;
 
   @override
   ConsumerState<_TransactionForm> createState() => _TransactionFormState();
@@ -38,6 +47,7 @@ class _TransactionFormState extends ConsumerState<_TransactionForm> {
   void initState() {
     super.initState();
     _personId = widget.initialPersonId;
+    _currency = widget.initialCurrency ?? MoneyCurrency.yer;
   }
 
   @override

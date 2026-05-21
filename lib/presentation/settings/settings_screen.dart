@@ -1,10 +1,12 @@
 import 'package:my_accounts/core/constants/app_constants.dart';
 import 'package:my_accounts/core/utils/app_error.dart';
 import 'package:my_accounts/core/widgets/app_brand_logo.dart';
+import 'package:my_accounts/domain/models/backup_file_info.dart';
 import 'package:my_accounts/presentation/shared/app_providers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:path/path.dart' as p;
@@ -18,11 +20,12 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   static const _backupCanceled = '__backup_canceled__';
-  static const _backupReminderThreshold = Duration(days: 7);
   static const _minBackupPasswordLength = 8;
 
   bool _backupBusy = false;
   bool _restoreBusy = false;
+  bool _validateBusy = false;
+  Future<List<BackupFileInfo>>? _defaultBackupsFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +35,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final backupReminderText = _buildBackupReminderText(settings);
     final backupMetaText = _buildBackupMetaText(settings);
     final restoreMetaText = _buildRestoreMetaText(settings);
+    final safetyBackupMetaText = _buildSafetyBackupMetaText(settings);
+    final defaultBackupsFuture = _defaultBackupsFuture ??=
+        ref.read(listBackupsUseCaseProvider).execute();
 
     return Scaffold(
       appBar: AppBar(
@@ -92,8 +98,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Text(_restoreBusy ? 'جارٍ...' : 'استعادة'),
                   ),
                 ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(LucideIcons.checkCircle),
+                  title: const Text('فحص ملف نسخة'),
+                  subtitle: const Text('يتحقق من صلاحية النسخة بدون استبدال البيانات.'),
+                  trailing: FilledButton(
+                    onPressed: _validateBusy ? null : _validateExternalBackup,
+                    child: Text(_validateBusy ? 'جارٍ...' : 'فحص'),
+                  ),
+                ),
               ],
             ),
+          ),
+          const SizedBox(height: 10),
+          _BackupReminderSettingsCard(
+            reminderDays: settings.reminderDays,
+            onChanged: controller.setReminderDays,
           ),
           if (backupReminderText != null) ...[
             const SizedBox(height: 10),
@@ -104,24 +125,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
           const SizedBox(height: 10),
           const _BackupGuidanceCard(),
+          const SizedBox(height: 10),
+          _DefaultBackupsCard(
+            backupsFuture: defaultBackupsFuture,
+            onRefresh: _refreshDefaultBackups,
+            onCopy: _copyPath,
+            onRestore: _restoreBackupFromManagedFile,
+            onDelete: _deleteManagedBackup,
+            onValidate: _validateManagedBackup,
+          ),
           if (backupMetaText != null) ...[
             const SizedBox(height: 10),
-            Card(
-              child: ListTile(
-                leading: const Icon(LucideIcons.clock3),
-                title: const Text('آخر نسخة احتياطية'),
-                subtitle: Text(backupMetaText),
-              ),
+            _BackupMetaCard(
+              icon: LucideIcons.clock3,
+              title: 'آخر نسخة احتياطية',
+              text: backupMetaText,
+              onCopy: () => _copyPath(settings.lastBackupPath),
             ),
           ],
           if (restoreMetaText != null) ...[
             const SizedBox(height: 10),
-            Card(
-              child: ListTile(
-                leading: const Icon(LucideIcons.history),
-                title: const Text('آخر استعادة'),
-                subtitle: Text(restoreMetaText),
-              ),
+            _BackupMetaCard(
+              icon: LucideIcons.history,
+              title: 'آخر استعادة',
+              text: restoreMetaText,
+              onCopy: () => _copyPath(settings.lastRestorePath),
+            ),
+          ],
+          if (safetyBackupMetaText != null) ...[
+            const SizedBox(height: 10),
+            _BackupMetaCard(
+              icon: LucideIcons.shieldCheck,
+              title: 'نسخة أمان قبل الاستعادة',
+              text: safetyBackupMetaText,
+              onCopy: () => _copyPath(settings.lastSafetyBackupPath),
             ),
           ],
           const SizedBox(height: 14),
@@ -201,10 +238,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await ref.read(settingsControllerProvider.notifier).setLastBackupMeta(
             at: DateTime.now(),
             path: path,
-          );
+      );
+      _refreshDefaultBackups();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تم إنشاء النسخة في: $path')),
+      _showPathSnackBar(
+        message: 'تم إنشاء النسخة في: $path',
+        path: path,
       );
     } catch (error) {
       if (!mounted) return;
@@ -217,6 +256,131 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _restoreBackup() async {
+    final confirmed = await _confirmRestoreIntent();
+    if (!confirmed) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['db', 'mabk'],
+      allowMultiple: false,
+    );
+    final filePath = result?.files.single.path;
+    if (filePath == null || filePath.trim().isEmpty) return;
+
+    await _restoreBackupFile(filePath);
+  }
+
+  Future<void> _restoreBackupFromManagedFile(String filePath) async {
+    final confirmed = await _confirmRestoreIntent();
+    if (!confirmed) return;
+    await _restoreBackupFile(filePath);
+  }
+
+  Future<void> _deleteManagedBackup(BackupFileInfo backup) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('حذف النسخة'),
+        content: Text('سيتم حذف النسخة:\n${backup.fileName}'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(deleteBackupUseCaseProvider).execute(backup.path);
+      await ref
+          .read(settingsControllerProvider.notifier)
+          .clearFileMetaForPath(backup.path);
+      _refreshDefaultBackups();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم حذف النسخة')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppError.message(error))),
+      );
+    }
+  }
+
+  Future<void> _validateManagedBackup(BackupFileInfo backup) async {
+    await _validateBackupFile(
+      backup.path,
+      encrypted: backup.isEncrypted,
+    );
+  }
+
+  Future<void> _validateExternalBackup() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['db', 'mabk'],
+      allowMultiple: false,
+    );
+    final filePath = result?.files.single.path;
+    if (filePath == null || filePath.trim().isEmpty) return;
+
+    final lowerPath = filePath.toLowerCase();
+    if (!lowerPath.endsWith('.db') && !lowerPath.endsWith('.mabk')) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('امتداد الملف غير مدعوم')),
+      );
+      return;
+    }
+
+    await _validateBackupFile(
+      filePath,
+      encrypted: lowerPath.endsWith('.mabk'),
+    );
+  }
+
+  Future<void> _validateBackupFile(
+    String filePath, {
+    required bool encrypted,
+  }) async {
+    String? password;
+    if (encrypted) {
+      password = await _askPassword(
+        title: 'كلمة مرور النسخة',
+        message: 'أدخل كلمة المرور لفحص النسخة المشفرة بدون استعادتها.',
+        optional: false,
+      );
+      if (!mounted) return;
+      if (password == null || password.isEmpty) return;
+    }
+
+    setState(() => _validateBusy = true);
+    try {
+      await ref.read(validateBackupUseCaseProvider).execute(
+            filePath,
+            password: password,
+          );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('النسخة صالحة للاستعادة')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppError.message(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _validateBusy = false);
+    }
+  }
+
+  Future<bool> _confirmRestoreIntent() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -236,15 +400,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
-    if (confirmed != true) return;
+    return confirmed == true;
+  }
 
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['db', 'mabk'],
-      allowMultiple: false,
-    );
-    final filePath = result?.files.single.path;
-    if (filePath == null || filePath.trim().isEmpty) return;
+  Future<void> _restoreBackupFile(String filePath) async {
     final lowerPath = filePath.toLowerCase();
     if (!lowerPath.endsWith('.db') && !lowerPath.endsWith('.mabk')) {
       if (!mounted) return;
@@ -271,19 +430,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     setState(() => _restoreBusy = true);
     try {
-      await ref.read(restoreBackupUseCaseProvider).execute(
+      final restoreResult =
+          await ref.read(restoreBackupUseCaseProvider).execute(
             filePath,
             password: password,
           );
+      final safetyBackupPath = restoreResult.safetyBackupPath;
       await ref.read(settingsControllerProvider.notifier).setLastRestoreMeta(
             at: DateTime.now(),
             path: filePath,
           );
+      if (safetyBackupPath != null) {
+        await ref
+            .read(settingsControllerProvider.notifier)
+            .setLastSafetyBackupMeta(
+              at: DateTime.now(),
+              path: safetyBackupPath,
+            );
+      }
       await ref.read(authControllerProvider.notifier).load();
       await ref.read(debtControllerProvider.notifier).refresh();
+      _refreshDefaultBackups();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تمت الاستعادة بنجاح')),
+      final safetyText = safetyBackupPath == null
+          ? ''
+          : '\nتم حفظ نسخة أمان: ${p.basename(safetyBackupPath)}';
+      _showPathSnackBar(
+        message: 'تمت الاستعادة بنجاح$safetyText',
+        path: safetyBackupPath ?? filePath,
       );
     } catch (error) {
       if (!mounted) return;
@@ -293,6 +467,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     } finally {
       if (mounted) setState(() => _restoreBusy = false);
     }
+  }
+
+  void _refreshDefaultBackups() {
+    if (!mounted) return;
+    setState(() {
+      _defaultBackupsFuture = ref.read(listBackupsUseCaseProvider).execute();
+    });
+  }
+
+  Future<void> _copyPath(String? path) async {
+    if (path == null || path.trim().isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: path));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تم نسخ المسار')),
+    );
+  }
+
+  void _showPathSnackBar({
+    required String message,
+    required String path,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(
+          label: 'نسخ',
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: path));
+          },
+        ),
+      ),
+    );
   }
 
   Future<String?> _askPassword({
@@ -421,34 +629,234 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   String? _buildBackupMetaText(AppSettings settings) {
-    final at = settings.lastBackupAt;
-    final path = settings.lastBackupPath;
+    return _buildFileMetaText(settings.lastBackupAt, settings.lastBackupPath);
+  }
+
+  String? _buildRestoreMetaText(AppSettings settings) {
+    return _buildFileMetaText(settings.lastRestoreAt, settings.lastRestorePath);
+  }
+
+  String? _buildSafetyBackupMetaText(AppSettings settings) {
+    return _buildFileMetaText(
+      settings.lastSafetyBackupAt,
+      settings.lastSafetyBackupPath,
+    );
+  }
+
+  String? _buildFileMetaText(DateTime? at, String? path) {
     if (at == null || path == null || path.trim().isEmpty) return null;
 
     final atText = DateFormat('yyyy/MM/dd - HH:mm', 'ar').format(at);
     return '$atText\n$path';
   }
 
-  String? _buildRestoreMetaText(AppSettings settings) {
-    final at = settings.lastRestoreAt;
-    final path = settings.lastRestorePath;
-    if (at == null || path == null || path.trim().isEmpty) return null;
-
-    final atText = DateFormat('yyyy/MM/dd - HH:mm', 'ar').format(at);
-    return '$atText\n${p.basename(path)}';
-  }
-
   String? _buildBackupReminderText(AppSettings settings) {
     final lastBackupAt = settings.lastBackupAt;
+    final reminderDays = settings.reminderDays.clamp(1, 365).toInt();
     if (lastBackupAt == null) {
       return 'لم يتم إنشاء نسخة احتياطية بعد. احفظ نسخة خارج الجهاز لتجنب فقدان البيانات.';
     }
 
     final elapsed = DateTime.now().difference(lastBackupAt);
-    if (elapsed < _backupReminderThreshold) return null;
+    if (elapsed < Duration(days: reminderDays)) return null;
 
     final days = elapsed.inDays;
-    return 'آخر نسخة احتياطية كانت قبل $days يوم. يفضّل إنشاء نسخة جديدة وحفظها خارج الجهاز.';
+    return 'آخر نسخة احتياطية كانت قبل $days يوم. فترة التذكير الحالية $reminderDays يوم.';
+  }
+}
+
+class _DefaultBackupsCard extends StatelessWidget {
+  const _DefaultBackupsCard({
+    required this.backupsFuture,
+    required this.onRefresh,
+    required this.onCopy,
+    required this.onRestore,
+    required this.onDelete,
+    required this.onValidate,
+  });
+
+  final Future<List<BackupFileInfo>> backupsFuture;
+  final VoidCallback onRefresh;
+  final ValueChanged<String?> onCopy;
+  final ValueChanged<String> onRestore;
+  final ValueChanged<BackupFileInfo> onDelete;
+  final ValueChanged<BackupFileInfo> onValidate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(LucideIcons.database),
+            title: const Text('النسخ داخل التطبيق'),
+            subtitle: const Text('آخر النسخ المحفوظة في مجلد التطبيق الافتراضي.'),
+            trailing: IconButton(
+              tooltip: 'تحديث',
+              icon: const Icon(Icons.refresh),
+              onPressed: onRefresh,
+            ),
+          ),
+          const Divider(height: 1),
+          FutureBuilder<List<BackupFileInfo>>(
+            future: backupsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: LinearProgressIndicator(),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return ListTile(
+                  leading: const Icon(Icons.error_outline),
+                  title: const Text('تعذر تحميل النسخ المحفوظة'),
+                  subtitle: Text(AppError.message(snapshot.error!)),
+                );
+              }
+
+              final backups = snapshot.data ?? const <BackupFileInfo>[];
+              if (backups.isEmpty) {
+                return const ListTile(
+                  leading: Icon(Icons.info_outline),
+                  title: Text('لا توجد نسخ محفوظة داخل التطبيق'),
+                );
+              }
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'عدد النسخ: ${backups.length}',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ),
+                  ),
+                  for (var i = 0; i < backups.length; i++) ...[
+                    if (i > 0) const Divider(height: 1),
+                    _DefaultBackupTile(
+                      backup: backups[i],
+                      onCopy: () => onCopy(backups[i].path),
+                      onRestore: () => onRestore(backups[i].path),
+                      onDelete: () => onDelete(backups[i]),
+                      onValidate: () => onValidate(backups[i]),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DefaultBackupTile extends StatelessWidget {
+  const _DefaultBackupTile({
+    required this.backup,
+    required this.onCopy,
+    required this.onRestore,
+    required this.onDelete,
+    required this.onValidate,
+  });
+
+  final BackupFileInfo backup;
+  final VoidCallback onCopy;
+  final VoidCallback onRestore;
+  final VoidCallback onDelete;
+  final VoidCallback onValidate;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = DateFormat('yyyy/MM/dd - HH:mm', 'ar').format(backup.modifiedAt);
+    final size = _formatBytes(backup.sizeBytes);
+    final type = backup.isSafetyCopy
+        ? 'نسخة أمان'
+        : (backup.isEncrypted ? 'مشفرة' : 'عادية');
+
+    return ListTile(
+      leading: Icon(
+        backup.isEncrypted ? Icons.lock_outline : LucideIcons.database,
+      ),
+      title: Text(
+        backup.fileName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textDirection: TextDirection.ltr,
+      ),
+      subtitle: Text('$date\n$type - $size'),
+      isThreeLine: true,
+      trailing: PopupMenuButton<String>(
+        tooltip: 'خيارات النسخة',
+        onSelected: (value) {
+          if (value == 'copy') onCopy();
+          if (value == 'validate') onValidate();
+          if (value == 'restore') onRestore();
+          if (value == 'delete') onDelete();
+        },
+        itemBuilder: (_) => const [
+          PopupMenuItem(value: 'copy', child: Text('نسخ المسار')),
+          PopupMenuItem(value: 'validate', child: Text('فحص النسخة')),
+          PopupMenuItem(value: 'restore', child: Text('استعادة')),
+          PopupMenuItem(value: 'delete', child: Text('حذف')),
+        ],
+      ),
+    );
+  }
+
+  static String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    final kb = bytes / 1024;
+    if (kb < 1024) return '${kb.toStringAsFixed(1)} KB';
+    final mb = kb / 1024;
+    return '${mb.toStringAsFixed(1)} MB';
+  }
+}
+
+class _BackupReminderSettingsCard extends StatelessWidget {
+  const _BackupReminderSettingsCard({
+    required this.reminderDays,
+    required this.onChanged,
+  });
+
+  final int reminderDays;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeDays = reminderDays.clamp(1, 365).toInt();
+
+    return Card(
+      child: ListTile(
+        leading: const Icon(LucideIcons.bell),
+        title: const Text('تذكير النسخ الاحتياطي'),
+        subtitle: Text('ينبهك إذا مر $safeDays يوم بدون نسخة جديدة.'),
+        trailing: PopupMenuButton<int>(
+          tooltip: 'تغيير الفترة',
+          initialValue: safeDays,
+          onSelected: onChanged,
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 3, child: Text('3 أيام')),
+            PopupMenuItem(value: 7, child: Text('7 أيام')),
+            PopupMenuItem(value: 14, child: Text('14 يوم')),
+            PopupMenuItem(value: 30, child: Text('30 يوم')),
+          ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('$safeDays'),
+              const SizedBox(width: 4),
+              const Icon(LucideIcons.chevronDown, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -483,6 +891,39 @@ class _BackupReminderCard extends StatelessWidget {
         trailing: TextButton(
           onPressed: onCreateBackup,
           child: const Text('نسخ الآن'),
+        ),
+      ),
+    );
+  }
+}
+
+class _BackupMetaCard extends StatelessWidget {
+  const _BackupMetaCard({
+    required this.icon,
+    required this.title,
+    required this.text,
+    required this.onCopy,
+  });
+
+  final IconData icon;
+  final String title;
+  final String text;
+  final VoidCallback onCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(title),
+        subtitle: SelectableText(
+          text,
+          textDirection: TextDirection.ltr,
+        ),
+        trailing: IconButton(
+          tooltip: 'نسخ المسار',
+          icon: const Icon(LucideIcons.copy),
+          onPressed: onCopy,
         ),
       ),
     );

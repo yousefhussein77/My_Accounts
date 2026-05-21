@@ -38,6 +38,18 @@ final restoreBackupUseCaseProvider = Provider<RestoreBackupUseCase>(
   (ref) => RestoreBackupUseCase(ref.watch(backupServiceProvider)),
 );
 
+final listBackupsUseCaseProvider = Provider<ListBackupsUseCase>(
+  (ref) => ListBackupsUseCase(ref.watch(backupServiceProvider)),
+);
+
+final deleteBackupUseCaseProvider = Provider<DeleteBackupUseCase>(
+  (ref) => DeleteBackupUseCase(ref.watch(backupServiceProvider)),
+);
+
+final validateBackupUseCaseProvider = Provider<ValidateBackupUseCase>(
+  (ref) => ValidateBackupUseCase(ref.watch(backupServiceProvider)),
+);
+
 final addTransactionUseCaseProvider = Provider<AddTransactionUseCase>(
   (ref) => AddTransactionUseCase(ref.watch(debtRepositoryProvider)),
 );
@@ -298,6 +310,8 @@ class AppSettings {
     this.lastBackupPath,
     this.lastRestoreAt,
     this.lastRestorePath,
+    this.lastSafetyBackupAt,
+    this.lastSafetyBackupPath,
   });
 
   final ThemeMode themeMode;
@@ -307,6 +321,8 @@ class AppSettings {
   final String? lastBackupPath;
   final DateTime? lastRestoreAt;
   final String? lastRestorePath;
+  final DateTime? lastSafetyBackupAt;
+  final String? lastSafetyBackupPath;
 
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -316,7 +332,11 @@ class AppSettings {
     String? lastBackupPath,
     DateTime? lastRestoreAt,
     String? lastRestorePath,
+    DateTime? lastSafetyBackupAt,
+    String? lastSafetyBackupPath,
     bool clearBackupMeta = false,
+    bool clearRestoreMeta = false,
+    bool clearSafetyBackupMeta = false,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -328,8 +348,16 @@ class AppSettings {
       lastBackupPath: clearBackupMeta
           ? null
           : (lastBackupPath ?? this.lastBackupPath),
-      lastRestoreAt: lastRestoreAt ?? this.lastRestoreAt,
-      lastRestorePath: lastRestorePath ?? this.lastRestorePath,
+      lastRestoreAt:
+          clearRestoreMeta ? null : (lastRestoreAt ?? this.lastRestoreAt),
+      lastRestorePath:
+          clearRestoreMeta ? null : (lastRestorePath ?? this.lastRestorePath),
+      lastSafetyBackupAt: clearSafetyBackupMeta
+          ? null
+          : (lastSafetyBackupAt ?? this.lastSafetyBackupAt),
+      lastSafetyBackupPath: clearSafetyBackupMeta
+          ? null
+          : (lastSafetyBackupPath ?? this.lastSafetyBackupPath),
     );
   }
 }
@@ -345,6 +373,8 @@ class SettingsController extends StateNotifier<AppSettings> {
   static const _lastBackupPathKey = 'last_backup_path';
   static const _lastRestoreAtKey = 'last_restore_at';
   static const _lastRestorePathKey = 'last_restore_path';
+  static const _lastSafetyBackupAtKey = 'last_safety_backup_at';
+  static const _lastSafetyBackupPathKey = 'last_safety_backup_path';
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -355,6 +385,10 @@ class SettingsController extends StateNotifier<AppSettings> {
     final restoreAtRaw = prefs.getString(_lastRestoreAtKey);
     final restoreAt =
         restoreAtRaw == null ? null : DateTime.tryParse(restoreAtRaw);
+    final safetyBackupAtRaw = prefs.getString(_lastSafetyBackupAtKey);
+    final safetyBackupAt = safetyBackupAtRaw == null
+        ? null
+        : DateTime.tryParse(safetyBackupAtRaw);
     state = state.copyWith(
       themeMode: mode,
       reminderDays: prefs.getInt(_reminderKey) ?? 3,
@@ -362,6 +396,8 @@ class SettingsController extends StateNotifier<AppSettings> {
       lastBackupPath: prefs.getString(_lastBackupPathKey),
       lastRestoreAt: restoreAt,
       lastRestorePath: prefs.getString(_lastRestorePathKey),
+      lastSafetyBackupAt: safetyBackupAt,
+      lastSafetyBackupPath: prefs.getString(_lastSafetyBackupPathKey),
     );
   }
 
@@ -395,6 +431,51 @@ class SettingsController extends StateNotifier<AppSettings> {
     await prefs.setString(_lastRestoreAtKey, at.toIso8601String());
     await prefs.setString(_lastRestorePathKey, path);
     state = state.copyWith(lastRestoreAt: at, lastRestorePath: path);
+  }
+
+  Future<void> setLastSafetyBackupMeta({
+    required DateTime at,
+    required String path,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastSafetyBackupAtKey, at.toIso8601String());
+    await prefs.setString(_lastSafetyBackupPathKey, path);
+    state = state.copyWith(
+      lastSafetyBackupAt: at,
+      lastSafetyBackupPath: path,
+    );
+  }
+
+  Future<void> clearFileMetaForPath(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    final normalizedPath = path.trim();
+    var clearBackup = false;
+    var clearRestore = false;
+    var clearSafetyBackup = false;
+
+    if (state.lastBackupPath == normalizedPath) {
+      await prefs.remove(_lastBackupAtKey);
+      await prefs.remove(_lastBackupPathKey);
+      clearBackup = true;
+    }
+    if (state.lastRestorePath == normalizedPath) {
+      await prefs.remove(_lastRestoreAtKey);
+      await prefs.remove(_lastRestorePathKey);
+      clearRestore = true;
+    }
+    if (state.lastSafetyBackupPath == normalizedPath) {
+      await prefs.remove(_lastSafetyBackupAtKey);
+      await prefs.remove(_lastSafetyBackupPathKey);
+      clearSafetyBackup = true;
+    }
+
+    if (clearBackup || clearRestore || clearSafetyBackup) {
+      state = state.copyWith(
+        clearBackupMeta: clearBackup,
+        clearRestoreMeta: clearRestore,
+        clearSafetyBackupMeta: clearSafetyBackup,
+      );
+    }
   }
 }
 

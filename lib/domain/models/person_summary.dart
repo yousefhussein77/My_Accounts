@@ -33,6 +33,18 @@ class PersonSummary {
 
   bool get hasMixedDirection => hasDebt && hasCredit;
 
+  List<MoneyCurrency> get activeCurrencies {
+    return MoneyCurrency.values
+        .where((currency) => hasActivityIn(currency))
+        .toList();
+  }
+
+  bool hasActivityIn(MoneyCurrency currency) {
+    return (balanceByCurrency[currency] ?? 0) != 0 ||
+        (debtByCurrency[currency] ?? 0) != 0 ||
+        (paymentByCurrency[currency] ?? 0) != 0;
+  }
+
   // Used for sorting by financial weight without mixing signed totals.
   double get exposureScore => balanceByCurrency.values.fold(
         0.0,
