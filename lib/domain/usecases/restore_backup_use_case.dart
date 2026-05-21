@@ -9,9 +9,6 @@ class RestoreBackupUseCase {
     String backupFilePath, {
     String? password,
   }) {
-    return _service.restoreBackup(
-      backupFilePath,
-      password: password,
-    );
+    return _service.restoreBackup(backupFilePath, password: password);
   }
 }

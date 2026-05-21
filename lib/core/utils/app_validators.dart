@@ -7,7 +7,9 @@ class AppValidators {
   static final RegExp _hasUppercase = RegExp(r'[A-Z]');
   static final RegExp _hasLowercase = RegExp(r'[a-z]');
   static final RegExp _hasDigit = RegExp(r'\d');
-  static final RegExp _hasSpecial = RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~;]');
+  static final RegExp _hasSpecial = RegExp(
+    r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~;]',
+  );
   static final RegExp _digitsOnly = RegExp(r'^\d+$');
 
   static String? name(String? value) {

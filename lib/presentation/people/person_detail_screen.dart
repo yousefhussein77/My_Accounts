@@ -105,17 +105,15 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> {
                   personId: widget.personId,
                   currency: selectedCurrency,
                 ),
-                onEditPerson: () => showPersonFormSheet(
-                  context,
-                  person: summary.person,
-                ),
+                onEditPerson: () =>
+                    showPersonFormSheet(context, person: summary.person),
               ),
               const SizedBox(height: 22),
               Text(
                 'عمليات ${selectedCurrency.label}',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 10),
               if (selectedTxs.isEmpty)
@@ -162,22 +160,20 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> {
     );
     if (!ok) return;
     try {
-      await ref.read(debtControllerProvider.notifier).deletePerson(
-            widget.personId,
-          );
+      await ref
+          .read(debtControllerProvider.notifier)
+          .deletePerson(widget.personId);
       if (context.mounted) context.pop();
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppError.message(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppError.message(error))));
     }
   }
 
   String _transactionSubtitle(DebtTransaction tx) {
-    final parts = <String>[
-      tx.note.trim().isEmpty ? 'عملية' : tx.note.trim(),
-    ];
+    final parts = <String>[tx.note.trim().isEmpty ? 'عملية' : tx.note.trim()];
     if (tx.dueDate != null) {
       final prefix = tx.isOverdue ? 'متأخرة منذ' : 'تستحق في';
       parts.add('$prefix ${AppFormatters.date(tx.dueDate!)}');
@@ -207,8 +203,8 @@ class _PersonHeader extends StatelessWidget {
               Text(
                 summary.person.name,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               Text(
                 summary.person.phone.isEmpty
@@ -246,16 +242,16 @@ class _CurrencyAccountsSection extends StatelessWidget {
           children: [
             Text(
               'الحسابات حسب العملة',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 4),
             Text(
               'اختر عملة لعرض رصيدها وسجلاتها فقط.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 14),
             SingleChildScrollView(
@@ -306,19 +302,21 @@ class _CurrencyAccountTile extends StatelessWidget {
     final directionColor = balance > 0
         ? colors.error
         : balance < 0
-            ? colors.primary
-            : colors.outline;
+        ? colors.primary
+        : colors.outline;
     final borderColor = selected ? colors.primary : colors.outlineVariant;
     final direction = balance > 0
         ? 'عليك'
         : balance < 0
-            ? 'لك'
-            : 'صافي';
+        ? 'لك'
+        : 'صافي';
 
     return Material(
       color: selected
-          ? colors.primaryContainer.withOpacity(.55)
-          : colors.surfaceContainerHighest.withOpacity(.35),
+          ? colors.primaryContainer.withAlpha((.55 * 255).clamp(0, 255).toInt())
+          : colors.surfaceContainerHighest.withAlpha(
+              (.35 * 255).clamp(0, 255).toInt(),
+            ),
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
@@ -341,7 +339,9 @@ class _CurrencyAccountTile extends StatelessWidget {
                     height: 34,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: directionColor.withOpacity(.14),
+                      color: directionColor.withAlpha(
+                        (.14 * 255).clamp(0, 255).toInt(),
+                      ),
                       borderRadius: BorderRadius.circular(7),
                     ),
                     child: Text(
@@ -369,9 +369,9 @@ class _CurrencyAccountTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: directionColor,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  color: directionColor,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -379,8 +379,8 @@ class _CurrencyAccountTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
+                  color: colors.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -417,9 +417,9 @@ class _SelectedCurrencySummary extends StatelessWidget {
           children: [
             Text(
               'ملخص ${currency.label}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 10),
             CurrencyTotalsView(
@@ -485,7 +485,9 @@ class _CurrencyStat extends StatelessWidget {
       constraints: const BoxConstraints(minWidth: 118, minHeight: 58),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest.withOpacity(.45),
+        color: colors.surfaceContainerHighest.withAlpha(
+          (.45 * 255).clamp(0, 255).toInt(),
+        ),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: colors.outlineVariant),
       ),
@@ -495,18 +497,18 @@ class _CurrencyStat extends StatelessWidget {
         children: [
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
         ],
       ),
@@ -566,17 +568,17 @@ class _EmptyCurrencyTransactions extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'لا توجد عمليات ${currency.label}',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 6),
             Text(
               'أضف عملية جديدة لهذه العملة بدون خلطها مع بقية الحسابات.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(

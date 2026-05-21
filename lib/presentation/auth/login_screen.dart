@@ -37,9 +37,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       data: (user) {
         if (user != null) context.go('/app');
       },
-      error: (error, _) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppError.message(error))),
-      ),
+      error: (error, _) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppError.message(error)))),
     );
   }
 

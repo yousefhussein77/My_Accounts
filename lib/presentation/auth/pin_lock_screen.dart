@@ -33,9 +33,9 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
           .difference(DateTime.now())
           .inSeconds
           .clamp(1, 9999);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('محاولات كثيرة، حاول بعد $seconds ثانية')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('محاولات كثيرة، حاول بعد $seconds ثانية')),
+      );
       return;
     }
 
@@ -46,9 +46,9 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppError.message(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppError.message(error))));
       return;
     }
     if (!mounted) return;
@@ -89,7 +89,9 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                   center: const Alignment(0, -0.75),
                   radius: 1.2,
                   colors: [
-                    colors.primary.withOpacity(0.12),
+                    colors.primary.withAlpha(
+                      (0.12 * 255).clamp(0, 255).toInt(),
+                    ),
                     colors.surface,
                   ],
                 ),
@@ -103,7 +105,9 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
               height: 520,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colors.primary.withOpacity(0.05),
+                color: colors.primary.withAlpha(
+                  (0.05 * 255).clamp(0, 255).toInt(),
+                ),
               ),
             ),
           ),
@@ -148,7 +152,9 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                         icon: _submitting
                             ? const SizedBox.square(
                                 dimension: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(LucideIcons.unlock),
                         label: const Text('فتح'),

@@ -65,7 +65,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   center: const Alignment(0, -0.7),
                   radius: 1.25,
                   colors: [
-                    colors.primary.withOpacity(0.12),
+                    colors.primary.withAlpha(
+                      (0.12 * 255).clamp(0, 255).toInt(),
+                    ),
                     colors.surface,
                   ],
                 ),
@@ -79,7 +81,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               height: 520,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colors.primary.withOpacity(0.05),
+                color: colors.primary.withAlpha(
+                  (0.05 * 255).clamp(0, 255).toInt(),
+                ),
               ),
             ),
           ),
@@ -133,17 +137,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             Text(
                               page.title,
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.w800),
                             ),
                             const SizedBox(height: 10),
                             Text(
                               page.description,
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: colors.onSurfaceVariant,
-                                  ),
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(color: colors.onSurfaceVariant),
                             ),
                           ],
                         );
@@ -160,7 +162,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         width: i == _index ? 18 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: i == _index ? colors.primary : colors.outlineVariant,
+                          color: i == _index
+                              ? colors.primary
+                              : colors.outlineVariant,
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),

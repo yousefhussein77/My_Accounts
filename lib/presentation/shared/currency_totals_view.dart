@@ -83,9 +83,11 @@ class _CurrencyTotalChip extends StatelessWidget {
         vertical: compact ? 7 : 9,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(.10),
+        color: color.withAlpha((.10 * 255).clamp(0, 255).toInt()),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(.22)),
+        border: Border.all(
+          color: color.withAlpha((.22 * 255).clamp(0, 255).toInt()),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -95,7 +97,7 @@ class _CurrencyTotalChip extends StatelessWidget {
             height: compact ? 28 : 32,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: color.withOpacity(.16),
+              color: color.withAlpha((.16 * 255).clamp(0, 255).toInt()),
               borderRadius: BorderRadius.circular(7),
             ),
             child: Text(
@@ -116,10 +118,7 @@ class _CurrencyTotalChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: (compact ? textTheme.labelLarge : textTheme.titleMedium)
-                    ?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w900,
-                ),
+                    ?.copyWith(color: color, fontWeight: FontWeight.w900),
               ),
               Text(
                 direction == null

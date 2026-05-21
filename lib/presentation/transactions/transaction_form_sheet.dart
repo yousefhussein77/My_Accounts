@@ -17,10 +17,8 @@ Future<void> showTransactionFormSheet(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => _TransactionForm(
-      initialPersonId: personId,
-      initialCurrency: currency,
-    ),
+    builder: (_) =>
+        _TransactionForm(initialPersonId: personId, initialCurrency: currency),
   );
 }
 
@@ -84,16 +82,16 @@ class _TransactionFormState extends ConsumerState<_TransactionForm> {
               children: [
                 Text(
                   'عملية جديدة',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 14),
                 if (people.isEmpty)
                   const Text('أضف شخصًا أولًا قبل تسجيل العملية.')
                 else ...[
                   DropdownButtonFormField<String>(
-                    value: _personId,
+                    initialValue: _personId,
                     decoration: const InputDecoration(
                       prefixIcon: Icon(LucideIcons.user),
                       labelText: 'الشخص',
@@ -133,8 +131,9 @@ class _TransactionFormState extends ConsumerState<_TransactionForm> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _amount,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       prefixIcon: Icon(LucideIcons.badgeDollarSign),
                       labelText: 'المبلغ',
@@ -143,7 +142,7 @@ class _TransactionFormState extends ConsumerState<_TransactionForm> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<MoneyCurrency>(
-                    value: _currency,
+                    initialValue: _currency,
                     decoration: const InputDecoration(
                       prefixIcon: Icon(LucideIcons.coins),
                       labelText: 'العملة',

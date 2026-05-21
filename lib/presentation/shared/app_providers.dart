@@ -68,8 +68,8 @@ final deleteTransactionUseCaseProvider = Provider<DeleteTransactionUseCase>(
 
 final authControllerProvider =
     StateNotifierProvider<AuthController, AsyncValue<AppUser?>>((ref) {
-  return AuthController(ref.watch(authRepositoryProvider));
-});
+      return AuthController(ref.watch(authRepositoryProvider));
+    });
 
 class AuthController extends StateNotifier<AsyncValue<AppUser?>> {
   AuthController(this._repository) : super(const AsyncValue.loading()) {
@@ -94,7 +94,9 @@ class AuthController extends StateNotifier<AsyncValue<AppUser?>> {
 
   Future<void> register(String name, String email, String password) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _repository.register(name, email, password));
+    state = await AsyncValue.guard(
+      () => _repository.register(name, email, password),
+    );
   }
 
   Future<void> logout() async {
@@ -103,8 +105,9 @@ class AuthController extends StateNotifier<AsyncValue<AppUser?>> {
   }
 }
 
-final pinControllerProvider =
-    StateNotifierProvider<PinController, PinState>((ref) {
+final pinControllerProvider = StateNotifierProvider<PinController, PinState>((
+  ref,
+) {
   return PinController();
 });
 
@@ -242,7 +245,10 @@ class PinController extends StateNotifier<PinState> {
     await prefs.setInt(_pinAttemptsKey, attempts);
     if (attempts >= _maxFailedAttempts) {
       final newLockedUntil = DateTime.now().add(_lockDuration);
-      await prefs.setString(_pinLockedUntilKey, newLockedUntil.toIso8601String());
+      await prefs.setString(
+        _pinLockedUntilKey,
+        newLockedUntil.toIso8601String(),
+      );
       state = state.copyWith(
         failedAttempts: attempts,
         lockedUntil: newLockedUntil,
@@ -298,8 +304,8 @@ class PinController extends StateNotifier<PinState> {
 
 final settingsControllerProvider =
     StateNotifierProvider<SettingsController, AppSettings>((ref) {
-  return SettingsController();
-});
+      return SettingsController();
+    });
 
 class AppSettings {
   const AppSettings({
@@ -348,10 +354,12 @@ class AppSettings {
       lastBackupPath: clearBackupMeta
           ? null
           : (lastBackupPath ?? this.lastBackupPath),
-      lastRestoreAt:
-          clearRestoreMeta ? null : (lastRestoreAt ?? this.lastRestoreAt),
-      lastRestorePath:
-          clearRestoreMeta ? null : (lastRestorePath ?? this.lastRestorePath),
+      lastRestoreAt: clearRestoreMeta
+          ? null
+          : (lastRestoreAt ?? this.lastRestoreAt),
+      lastRestorePath: clearRestoreMeta
+          ? null
+          : (lastRestorePath ?? this.lastRestorePath),
       lastSafetyBackupAt: clearSafetyBackupMeta
           ? null
           : (lastSafetyBackupAt ?? this.lastSafetyBackupAt),
@@ -379,12 +387,17 @@ class SettingsController extends StateNotifier<AppSettings> {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final themeName = prefs.getString(_themeKey) ?? ThemeMode.light.name;
-    final mode = themeName == ThemeMode.dark.name ? ThemeMode.dark : ThemeMode.light;
+    final mode = themeName == ThemeMode.dark.name
+        ? ThemeMode.dark
+        : ThemeMode.light;
     final backupAtRaw = prefs.getString(_lastBackupAtKey);
-    final backupAt = backupAtRaw == null ? null : DateTime.tryParse(backupAtRaw);
+    final backupAt = backupAtRaw == null
+        ? null
+        : DateTime.tryParse(backupAtRaw);
     final restoreAtRaw = prefs.getString(_lastRestoreAtKey);
-    final restoreAt =
-        restoreAtRaw == null ? null : DateTime.tryParse(restoreAtRaw);
+    final restoreAt = restoreAtRaw == null
+        ? null
+        : DateTime.tryParse(restoreAtRaw);
     final safetyBackupAtRaw = prefs.getString(_lastSafetyBackupAtKey);
     final safetyBackupAt = safetyBackupAtRaw == null
         ? null
@@ -440,10 +453,7 @@ class SettingsController extends StateNotifier<AppSettings> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_lastSafetyBackupAtKey, at.toIso8601String());
     await prefs.setString(_lastSafetyBackupPathKey, path);
-    state = state.copyWith(
-      lastSafetyBackupAt: at,
-      lastSafetyBackupPath: path,
-    );
+    state = state.copyWith(lastSafetyBackupAt: at, lastSafetyBackupPath: path);
   }
 
   Future<void> clearFileMetaForPath(String path) async {
@@ -481,15 +491,15 @@ class SettingsController extends StateNotifier<AppSettings> {
 
 final debtControllerProvider =
     StateNotifierProvider<DebtController, AsyncValue<DebtState>>((ref) {
-  return DebtController(
-    ref.watch(debtRepositoryProvider),
-    ref.watch(addTransactionUseCaseProvider),
-    ref.watch(savePersonUseCaseProvider),
-    ref.watch(deletePersonUseCaseProvider),
-    ref.watch(deleteTransactionUseCaseProvider),
-    ref,
-  );
-});
+      return DebtController(
+        ref.watch(debtRepositoryProvider),
+        ref.watch(addTransactionUseCaseProvider),
+        ref.watch(savePersonUseCaseProvider),
+        ref.watch(deletePersonUseCaseProvider),
+        ref.watch(deleteTransactionUseCaseProvider),
+        ref,
+      );
+    });
 
 class DebtState {
   const DebtState({
@@ -521,8 +531,9 @@ class DebtState {
     list.sort((a, b) {
       return switch (sort) {
         PeopleSort.name => a.person.name.compareTo(b.person.name),
-        PeopleSort.recent =>
-          (b.lastActivity ?? b.person.createdAt).compareTo(a.lastActivity ?? a.person.createdAt),
+        PeopleSort.recent => (b.lastActivity ?? b.person.createdAt).compareTo(
+          a.lastActivity ?? a.person.createdAt,
+        ),
         PeopleSort.balance => b.exposureScore.compareTo(a.exposureScore),
       };
     });
@@ -554,8 +565,7 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
     this._deletePerson,
     this._deleteTransaction,
     this._ref,
-  )
-      : super(const AsyncValue.loading()) {
+  ) : super(const AsyncValue.loading()) {
     refresh();
   }
 
@@ -565,7 +575,7 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
   final DeletePersonUseCase _deletePerson;
   final DeleteTransactionUseCase _deleteTransaction;
   final Ref _ref;
-  
+
   String? _currentUserId() => _ref.read(authControllerProvider).valueOrNull?.id;
 
   Future<void> refresh() async {
@@ -580,10 +590,9 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
       }
       final people = await _repository.people(userId);
       final transactions = await _repository.transactions(userId);
-      state = AsyncValue.data(previous.copyWith(
-        people: people,
-        transactions: transactions,
-      ));
+      state = AsyncValue.data(
+        previous.copyWith(people: people, transactions: transactions),
+      );
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
@@ -625,7 +634,9 @@ class DebtController extends StateNotifier<AsyncValue<DebtState>> {
         name: name,
         phone: phone,
         note: note,
-        existingPerson: existing == null || existing.isEmpty ? null : existing.first,
+        existingPerson: existing == null || existing.isEmpty
+            ? null
+            : existing.first,
       ),
     );
 

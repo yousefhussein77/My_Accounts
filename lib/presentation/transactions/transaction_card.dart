@@ -31,7 +31,7 @@ class TransactionCard extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: color.withOpacity(.13),
+                color: color.withAlpha((.13 * 255).clamp(0, 255).toInt()),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -58,8 +58,8 @@ class TransactionCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                   if (isDebt && dueDate != null) ...[
                     const SizedBox(height: 4),
@@ -82,8 +82,8 @@ class TransactionCard extends StatelessWidget {
                                 : 'تستحق في ${AppFormatters.date(dueDate)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
                                   color: isOverdue
                                       ? colors.error
                                       : colors.onSurfaceVariant,

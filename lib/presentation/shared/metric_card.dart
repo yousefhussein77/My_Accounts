@@ -33,7 +33,7 @@ class MetricCard extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(.14),
+                    color: color.withAlpha((.14 * 255).clamp(0, 255).toInt()),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Icon(icon, color: color, size: 19),
@@ -49,9 +49,8 @@ class MetricCard extends StatelessWidget {
                             child: Text(
                               value ?? '',
                               textAlign: TextAlign.right,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w900),
                             ),
                           )
                         : valueChild!,
@@ -63,9 +62,9 @@ class MetricCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                        height: 1.15,
-                      ),
+                    color: colors.onSurfaceVariant,
+                    height: 1.15,
+                  ),
                 ),
               ],
             );

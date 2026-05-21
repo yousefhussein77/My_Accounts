@@ -5,13 +5,7 @@ class ValidateBackupUseCase {
 
   final LocalBackupService _service;
 
-  Future<void> execute(
-    String backupPath, {
-    String? password,
-  }) {
-    return _service.validateBackup(
-      backupPath,
-      password: password,
-    );
+  Future<void> execute(String backupPath, {String? password}) {
+    return _service.validateBackup(backupPath, password: password);
   }
 }

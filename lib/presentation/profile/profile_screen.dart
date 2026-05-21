@@ -54,9 +54,9 @@ class ProfileScreen extends ConsumerWidget {
                 final value = pin.text.trim();
                 final pinError = AppValidators.pin(value);
                 if (pinError != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(pinError)),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(pinError)));
                   return;
                 }
                 if (value != confirm.text.trim()) {
@@ -126,9 +126,8 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           Text(
                             user?.name ?? 'مستخدم My Accounts',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w900),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -210,7 +209,11 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.icon, required this.title, required this.subtitle});
+  const _Tile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
 
   final IconData icon;
   final String title;

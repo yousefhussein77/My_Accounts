@@ -39,9 +39,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final state = ref.read(authControllerProvider);
     state.whenOrNull(
       data: (_) => context.go('/app'),
-      error: (error, _) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppError.message(error))),
-      ),
+      error: (error, _) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppError.message(error)))),
     );
   }
 
@@ -92,8 +92,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   prefixIcon: Icon(LucideIcons.lock),
                   labelText: 'تأكيد كلمة المرور',
                 ),
-                validator: (v) =>
-                    (v ?? '') == _password.text ? null : 'تأكيد كلمة المرور غير مطابق',
+                validator: (v) => (v ?? '') == _password.text
+                    ? null
+                    : 'تأكيد كلمة المرور غير مطابق',
               ),
               const SizedBox(height: 18),
               FilledButton.icon(

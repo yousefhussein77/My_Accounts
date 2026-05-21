@@ -24,7 +24,10 @@ class ReportsScreen extends ConsumerWidget {
           data: (data) {
             final now = DateTime.now();
             final monthTxs = data.transactions
-                .where((tx) => tx.date.year == now.year && tx.date.month == now.month)
+                .where(
+                  (tx) =>
+                      tx.date.year == now.year && tx.date.month == now.month,
+                )
                 .toList();
 
             final debtTotals = _totalsByCurrency(
@@ -66,7 +69,10 @@ class ReportsScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.all(18),
               children: [
-                AppHeader(title: 'التقارير', subtitle: 'ملخص ${AppFormatters.month(now)}'),
+                AppHeader(
+                  title: 'التقارير',
+                  subtitle: 'ملخص ${AppFormatters.month(now)}',
+                ),
                 const SizedBox(height: 16),
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -85,10 +91,9 @@ class ReportsScreen extends ConsumerWidget {
                 const SizedBox(height: 22),
                 Text(
                   'مؤشر هذا الشهر',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 12),
                 if (activeCurrencies.isEmpty)
@@ -97,7 +102,11 @@ class ReportsScreen extends ConsumerWidget {
                   ...activeCurrencies.map((currency) {
                     final debt = debtTotals[currency] ?? 0;
                     final paid = paidTotals[currency] ?? 0;
-                    final maxValue = [debt, paid, 1.0].reduce((a, b) => a > b ? a : b);
+                    final maxValue = [
+                      debt,
+                      paid,
+                      1.0,
+                    ].reduce((a, b) => a > b ? a : b);
                     return Column(
                       children: [
                         _ReportBar(
@@ -120,64 +129,67 @@ class ReportsScreen extends ConsumerWidget {
                 const SizedBox(height: 22),
                 Text(
                   'أعلى المتابعات',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 10),
-                ...data.people.take(5).map(
-                  (item) => Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                ...data.people
+                    .take(5)
+                    .map(
+                      (item) => Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(LucideIcons.userCheck),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  item.person.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w900),
-                                ),
+                              Row(
+                                children: [
+                                  const Icon(LucideIcons.userCheck),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      item.person.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              CurrencyTotalsView(
+                                totals: item.balanceByCurrency,
+                                compact: true,
+                                showDirection: true,
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  CurrencyTotalsView(
+                                    totals: item.debtByCurrency,
+                                    color: colors.error,
+                                    compact: true,
+                                  ),
+                                  CurrencyTotalsView(
+                                    totals: item.paymentByCurrency,
+                                    color: colors.primary,
+                                    compact: true,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                          CurrencyTotalsView(
-                            totals: item.balanceByCurrency,
-                            compact: true,
-                            showDirection: true,
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              CurrencyTotalsView(
-                                totals: item.debtByCurrency,
-                                color: colors.error,
-                                compact: true,
-                              ),
-                              CurrencyTotalsView(
-                                totals: item.paymentByCurrency,
-                                color: colors.primary,
-                                compact: true,
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
               ],
             );
           },

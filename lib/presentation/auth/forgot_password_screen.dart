@@ -11,7 +11,8 @@ class ForgotPasswordScreen extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return AuthFormShell(
       title: 'استعادة كلمة المرور',
-      subtitle: 'هذا التطبيق يعمل محليًا على جهازك ولا يرسل بريد استعادة تلقائيًا.',
+      subtitle:
+          'هذا التطبيق يعمل محليًا على جهازك ولا يرسل بريد استعادة تلقائيًا.',
       children: [
         Container(
           padding: const EdgeInsets.all(16),
@@ -32,9 +33,9 @@ class ForgotPasswordScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'إذا نسيت كلمة المرور، استخدم نسخة احتياطية موثوقة أو أنشئ حسابًا محليًا جديدًا.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
               ),
             ],
           ),

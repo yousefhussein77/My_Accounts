@@ -64,9 +64,9 @@ class PersonSummaryCard extends StatelessWidget {
                     child: Text(
                       summary.person.name.characters.first,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: colors.onPrimaryContainer,
-                            fontWeight: FontWeight.w900,
-                          ),
+                        color: colors.onPrimaryContainer,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -78,9 +78,8 @@ class PersonSummaryCard extends StatelessWidget {
                           summary.person.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w900,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w900),
                         ),
                         const SizedBox(height: 3),
                         Text(
@@ -89,9 +88,8 @@ class PersonSummaryCard extends StatelessWidget {
                               : summary.person.phone,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: colors.onSurfaceVariant,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -122,7 +120,9 @@ class PersonSummaryCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 7,
-                  backgroundColor: colors.surfaceVariant.withOpacity(.55),
+                  backgroundColor: colors.surfaceContainerHighest.withAlpha(
+                    (.55 * 255).clamp(0, 255).toInt(),
+                  ),
                   color: colors.primary,
                 ),
               ),
@@ -131,9 +131,9 @@ class PersonSummaryCard extends StatelessWidget {
                 summary.lastActivity == null
                     ? 'لا توجد عمليات بعد'
                     : 'آخر نشاط: ${AppFormatters.date(summary.lastActivity!)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
               ),
             ],
           ),

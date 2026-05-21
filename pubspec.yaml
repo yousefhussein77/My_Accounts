@@ -65,22 +65,22 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/branding/app_icon_isolated.png
+  image_path: assets/branding/app_icon.png
   remove_alpha_ios: true
-  adaptive_icon_background: "#00000000"
-  adaptive_icon_foreground: assets/branding/app_icon_isolated.png
+  adaptive_icon_background: "#D9A84A"
+  adaptive_icon_foreground: assets/branding/app_icon.png
   web:
     generate: true
-    image_path: assets/branding/app_icon_isolated.png
+    image_path: assets/branding/app_icon.png
     background_color: "#00000000"
     theme_color: "#B88A3B"
   windows:
     generate: true
-    image_path: assets/branding/app_icon_isolated.png
+    image_path: assets/branding/app_icon.png
     icon_size: 256
   macos:
     generate: true
-    image_path: assets/branding/app_icon_isolated.png
+    image_path: assets/branding/app_icon.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

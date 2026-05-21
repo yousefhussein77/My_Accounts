@@ -49,7 +49,8 @@ class SqliteDebtRepository implements DebtRepository {
         paymentTotal: paymentTotal,
         balanceByCurrency: {
           for (final currency in MoneyCurrency.values)
-            currency: (debtByCurrency[currency] ?? 0) -
+            currency:
+                (debtByCurrency[currency] ?? 0) -
                 (paymentByCurrency[currency] ?? 0),
         },
         debtByCurrency: debtByCurrency,
@@ -75,14 +76,10 @@ class SqliteDebtRepository implements DebtRepository {
   @override
   Future<void> savePerson(String userId, DebtPerson person) async {
     final db = await _database.database;
-    await db.insert(
-      'people',
-      {
-        ...person.toMap(),
-        'owner_user_id': userId,
-      },
-      conflictAlgorithm: sqflite.ConflictAlgorithm.replace,
-    );
+    await db.insert('people', {
+      ...person.toMap(),
+      'owner_user_id': userId,
+    }, conflictAlgorithm: sqflite.ConflictAlgorithm.replace);
   }
 
   @override
@@ -130,16 +127,15 @@ class SqliteDebtRepository implements DebtRepository {
   }
 
   @override
-  Future<void> saveTransaction(String userId, DebtTransaction transaction) async {
+  Future<void> saveTransaction(
+    String userId,
+    DebtTransaction transaction,
+  ) async {
     final db = await _database.database;
-    await db.insert(
-      'debt_transactions',
-      {
-        ...transaction.toMap(),
-        'owner_user_id': userId,
-      },
-      conflictAlgorithm: sqflite.ConflictAlgorithm.replace,
-    );
+    await db.insert('debt_transactions', {
+      ...transaction.toMap(),
+      'owner_user_id': userId,
+    }, conflictAlgorithm: sqflite.ConflictAlgorithm.replace);
   }
 
   @override

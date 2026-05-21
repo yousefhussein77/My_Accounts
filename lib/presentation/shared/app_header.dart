@@ -43,9 +43,9 @@ class AppHeader extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      height: 1.1,
-                    ),
+                  fontWeight: FontWeight.w900,
+                  height: 1.1,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -53,16 +53,13 @@ class AppHeader extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
         ),
-        if (trailing != null) ...[
-          trailing!,
-          const SizedBox(width: 8),
-        ],
+        if (trailing != null) ...[trailing!, const SizedBox(width: 8)],
         if (showThemeToggle)
           SizedBox.square(
             dimension: 44,

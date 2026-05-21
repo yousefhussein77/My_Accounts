@@ -22,14 +22,11 @@ class PersonSummary {
   final Map<MoneyCurrency, double> paymentByCurrency;
   final DateTime? lastActivity;
 
-  bool get isSettled =>
-      balanceByCurrency.values.every((value) => value == 0);
+  bool get isSettled => balanceByCurrency.values.every((value) => value == 0);
 
-  bool get hasDebt =>
-      balanceByCurrency.values.any((value) => value > 0);
+  bool get hasDebt => balanceByCurrency.values.any((value) => value > 0);
 
-  bool get hasCredit =>
-      balanceByCurrency.values.any((value) => value < 0);
+  bool get hasCredit => balanceByCurrency.values.any((value) => value < 0);
 
   bool get hasMixedDirection => hasDebt && hasCredit;
 
@@ -46,14 +43,14 @@ class PersonSummary {
   }
 
   // Used for sorting by financial weight without mixing signed totals.
-  double get exposureScore => balanceByCurrency.values.fold(
-        0.0,
-        (sum, value) => sum + value.abs(),
-      );
+  double get exposureScore =>
+      balanceByCurrency.values.fold(0.0, (sum, value) => sum + value.abs());
 
   // Progress can be shown only when all debt exists in a single currency.
   double? get singleCurrencyProgress {
-    final activeDebt = debtByCurrency.entries.where((e) => e.value > 0).toList();
+    final activeDebt = debtByCurrency.entries
+        .where((e) => e.value > 0)
+        .toList();
     if (activeDebt.length != 1) return null;
     final currency = activeDebt.first.key;
     final debt = activeDebt.first.value;

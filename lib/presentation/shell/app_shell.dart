@@ -33,10 +33,22 @@ class _AppShellState extends State<AppShell> {
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
         destinations: const [
-          NavigationDestination(icon: Icon(LucideIcons.users), label: 'الأشخاص'),
-          NavigationDestination(icon: Icon(LucideIcons.receipt), label: 'السجل'),
-          NavigationDestination(icon: Icon(LucideIcons.barChart3), label: 'التقارير'),
-          NavigationDestination(icon: Icon(LucideIcons.userCircle), label: 'حسابي'),
+          NavigationDestination(
+            icon: Icon(LucideIcons.users),
+            label: 'الأشخاص',
+          ),
+          NavigationDestination(
+            icon: Icon(LucideIcons.receipt),
+            label: 'السجل',
+          ),
+          NavigationDestination(
+            icon: Icon(LucideIcons.barChart3),
+            label: 'التقارير',
+          ),
+          NavigationDestination(
+            icon: Icon(LucideIcons.userCircle),
+            label: 'حسابي',
+          ),
         ],
       ),
     );

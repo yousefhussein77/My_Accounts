@@ -37,8 +37,8 @@ class _PeopleScreenState extends ConsumerState<PeopleScreen> {
             final people = _selectedCurrency == null
                 ? visiblePeople
                 : visiblePeople
-                    .where((item) => item.hasActivityIn(_selectedCurrency!))
-                    .toList();
+                      .where((item) => item.hasActivityIn(_selectedCurrency!))
+                      .toList();
             final currencyCounts = {
               for (final currency in MoneyCurrency.values)
                 currency: visiblePeople
@@ -66,8 +66,9 @@ class _PeopleScreenState extends ConsumerState<PeopleScreen> {
                 Row(
                   children: [
                     PopupMenuButton<PeopleSort>(
-                      onSelected:
-                          ref.read(debtControllerProvider.notifier).setSort,
+                      onSelected: ref
+                          .read(debtControllerProvider.notifier)
+                          .setSort,
                       itemBuilder: (_) => const [
                         PopupMenuItem(
                           value: PeopleSort.balance,

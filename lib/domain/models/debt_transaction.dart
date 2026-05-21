@@ -34,28 +34,28 @@ class DebtTransaction {
   }
 
   Map<String, Object?> toMap() => {
-        'id': id,
-        'person_id': personId,
-        'type': type.name,
-        'amount': amount,
-        'currency': currency.code,
-        'title': title,
-        'note': note,
-        'date': date.toIso8601String(),
-        'due_date': dueDate?.toIso8601String(),
-      };
+    'id': id,
+    'person_id': personId,
+    'type': type.name,
+    'amount': amount,
+    'currency': currency.code,
+    'title': title,
+    'note': note,
+    'date': date.toIso8601String(),
+    'due_date': dueDate?.toIso8601String(),
+  };
 
   factory DebtTransaction.fromMap(Map<String, Object?> map) => DebtTransaction(
-        id: map['id'] as String,
-        personId: map['person_id'] as String,
-        type: DebtTransactionType.values.byName(map['type'] as String),
-        amount: (map['amount'] as num).toDouble(),
-        currency: MoneyCurrency.fromCode(map['currency'] as String?),
-        title: map['title'] as String,
-        note: map['note'] as String? ?? '',
-        date: DateTime.parse(map['date'] as String),
-        dueDate: map['due_date'] == null
-            ? null
-            : DateTime.parse(map['due_date'] as String),
-      );
+    id: map['id'] as String,
+    personId: map['person_id'] as String,
+    type: DebtTransactionType.values.byName(map['type'] as String),
+    amount: (map['amount'] as num).toDouble(),
+    currency: MoneyCurrency.fromCode(map['currency'] as String?),
+    title: map['title'] as String,
+    note: map['note'] as String? ?? '',
+    date: DateTime.parse(map['date'] as String),
+    dueDate: map['due_date'] == null
+        ? null
+        : DateTime.parse(map['due_date'] as String),
+  );
 }

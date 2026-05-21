@@ -3,10 +3,7 @@ import 'package:my_accounts/domain/models/debt_transaction.dart';
 import 'package:my_accounts/domain/models/money_currency.dart';
 
 void main() {
-  DebtTransaction tx({
-    required DebtTransactionType type,
-    DateTime? dueDate,
-  }) {
+  DebtTransaction tx({required DebtTransactionType type, DateTime? dueDate}) {
     return DebtTransaction(
       id: 'tx-1',
       personId: 'person-1',

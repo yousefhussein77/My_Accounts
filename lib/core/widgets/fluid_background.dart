@@ -3,10 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 class FluidBackground extends StatefulWidget {
-  const FluidBackground({
-    this.intensity = 1,
-    super.key,
-  });
+  const FluidBackground({this.intensity = 1, super.key});
 
   final double intensity;
 
@@ -97,7 +94,7 @@ class _FluidBackgroundPainter extends CustomPainter {
         size.height * 0.16,
       ),
       radius: size.shortestSide * 0.55,
-      color: primary.withOpacity(0.12 * intensity),
+      color: primary.withAlpha((0.12 * intensity * 255).clamp(0, 255).toInt()),
     );
     _drawGlow(
       canvas,
@@ -107,7 +104,9 @@ class _FluidBackgroundPainter extends CustomPainter {
         size.height * 0.72,
       ),
       radius: size.shortestSide * 0.46,
-      color: secondary.withOpacity(0.09 * intensity),
+      color: secondary.withAlpha(
+        (0.09 * intensity * 255).clamp(0, 255).toInt(),
+      ),
     );
 
     _drawWave(
@@ -116,7 +115,7 @@ class _FluidBackgroundPainter extends CustomPainter {
       yFactor: 0.30,
       amplitude: 18 * intensity,
       phase: progress * math.pi * 2,
-      color: primary.withOpacity(0.10 * intensity),
+      color: primary.withAlpha((0.10 * intensity * 255).clamp(0, 255).toInt()),
     );
     _drawWave(
       canvas,
@@ -124,7 +123,7 @@ class _FluidBackgroundPainter extends CustomPainter {
       yFactor: 0.42,
       amplitude: 14 * intensity,
       phase: progress * math.pi * 2 + math.pi * 0.65,
-      color: outline.withOpacity(0.11 * intensity),
+      color: outline.withAlpha((0.11 * intensity * 255).clamp(0, 255).toInt()),
     );
   }
 
@@ -137,7 +136,7 @@ class _FluidBackgroundPainter extends CustomPainter {
   }) {
     final paint = Paint()
       ..shader = RadialGradient(
-        colors: [color, color.withOpacity(0)],
+        colors: [color, color.withAlpha(0)],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, paint);
   }
@@ -154,7 +153,8 @@ class _FluidBackgroundPainter extends CustomPainter {
     final baseY = size.height * yFactor;
     path.moveTo(0, baseY);
     for (var x = 0.0; x <= size.width; x += 12) {
-      final y = baseY +
+      final y =
+          baseY +
           math.sin((x / size.width * math.pi * 2) + phase) * amplitude +
           math.sin((x / size.width * math.pi * 4) - phase * 0.7) *
               amplitude *

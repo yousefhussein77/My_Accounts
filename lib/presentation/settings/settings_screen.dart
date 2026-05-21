@@ -4,12 +4,14 @@ import 'package:my_accounts/core/widgets/app_brand_logo.dart';
 import 'package:my_accounts/domain/models/backup_file_info.dart';
 import 'package:my_accounts/presentation/shared/app_providers.dart';
 import 'package:file_picker/file_picker.dart';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -26,6 +28,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _restoreBusy = false;
   bool _validateBusy = false;
   Future<List<BackupFileInfo>>? _defaultBackupsFuture;
+  Future<String>? _defaultBackupDirectoryFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +39,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final backupMetaText = _buildBackupMetaText(settings);
     final restoreMetaText = _buildRestoreMetaText(settings);
     final safetyBackupMetaText = _buildSafetyBackupMetaText(settings);
-    final defaultBackupsFuture = _defaultBackupsFuture ??=
-        ref.read(listBackupsUseCaseProvider).execute();
+    final defaultBackupsFuture = _defaultBackupsFuture ??= ref
+        .read(listBackupsUseCaseProvider)
+        .execute();
+    final defaultBackupDirectoryFuture = _defaultBackupDirectoryFuture ??=
+        _resolveDefaultBackupDirectoryPath();
 
     return Scaffold(
       appBar: AppBar(
@@ -54,23 +60,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         padding: const EdgeInsets.all(18),
         children: [
           Card(
-            child: Column(
-              children: [
-                RadioListTile<ThemeMode>(
-                  value: ThemeMode.light,
-                  groupValue: settings.themeMode,
-                  onChanged: (v) => controller.setThemeMode(v!),
-                  title: const Text('الوضع الفاتح'),
-                  secondary: const Icon(LucideIcons.sun),
+            child: ListTile(
+              leading: Icon(
+                settings.themeMode == ThemeMode.dark
+                    ? LucideIcons.moon
+                    : LucideIcons.sun,
+              ),
+              title: const Text('الوضع الداكن'),
+              trailing: Switch(
+                value: settings.themeMode == ThemeMode.dark,
+                onChanged: (v) => controller.setThemeMode(
+                  v ? ThemeMode.dark : ThemeMode.light,
                 ),
-                RadioListTile<ThemeMode>(
-                  value: ThemeMode.dark,
-                  groupValue: settings.themeMode,
-                  onChanged: (v) => controller.setThemeMode(v!),
-                  title: const Text('الوضع الداكن'),
-                  secondary: const Icon(LucideIcons.moon),
-                ),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -102,7 +104,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ListTile(
                   leading: const Icon(LucideIcons.checkCircle),
                   title: const Text('فحص ملف نسخة'),
-                  subtitle: const Text('يتحقق من صلاحية النسخة بدون استبدال البيانات.'),
+                  subtitle: const Text(
+                    'يتحقق من صلاحية النسخة بدون استبدال البيانات.',
+                  ),
                   trailing: FilledButton(
                     onPressed: _validateBusy ? null : _validateExternalBackup,
                     child: Text(_validateBusy ? 'جارٍ...' : 'فحص'),
@@ -125,6 +129,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
           const SizedBox(height: 10),
           const _BackupGuidanceCard(),
+          const SizedBox(height: 10),
+          _DefaultBackupFolderCard(
+            directoryPathFuture: defaultBackupDirectoryFuture,
+            onCopy: _copyPath,
+          ),
           const SizedBox(height: 10),
           _DefaultBackupsCard(
             backupsFuture: defaultBackupsFuture,
@@ -177,7 +186,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               subtitle: Text('© جميع الحقوق محفوظة'),
               trailing: Text(
                 AppConstants.copyrightOwner,
-                textDirection: TextDirection.ltr,
+                textDirection: ui.TextDirection.ltr,
                 style: TextStyle(fontSize: 12),
               ),
             ),
@@ -204,7 +213,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (password.isNotEmpty && password.length < _minBackupPasswordLength) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('كلمة مرور النسخة المشفرة يجب أن تكون 8 أحرف على الأقل'),
+          content: Text(
+            'كلمة مرور النسخة المشفرة يجب أن تكون 8 أحرف على الأقل',
+          ),
         ),
       );
       return;
@@ -231,25 +242,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     setState(() => _backupBusy = true);
     try {
-      final path = await ref.read(createBackupUseCaseProvider).execute(
+      final path = await ref
+          .read(createBackupUseCaseProvider)
+          .execute(
             directoryPath: directoryPath,
             password: password.isEmpty ? null : password,
           );
-      await ref.read(settingsControllerProvider.notifier).setLastBackupMeta(
-            at: DateTime.now(),
-            path: path,
-      );
+      await ref
+          .read(settingsControllerProvider.notifier)
+          .setLastBackupMeta(at: DateTime.now(), path: path);
       _refreshDefaultBackups();
       if (!mounted) return;
-      _showPathSnackBar(
-        message: 'تم إنشاء النسخة في: $path',
-        path: path,
-      );
+      _showPathSnackBar(message: 'تم إنشاء النسخة في: $path', path: path);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppError.message(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppError.message(error))));
     } finally {
       if (mounted) setState(() => _backupBusy = false);
     }
@@ -303,22 +312,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           .clearFileMetaForPath(backup.path);
       _refreshDefaultBackups();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم حذف النسخة')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تم حذف النسخة')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppError.message(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppError.message(error))));
     }
   }
 
   Future<void> _validateManagedBackup(BackupFileInfo backup) async {
-    await _validateBackupFile(
-      backup.path,
-      encrypted: backup.isEncrypted,
-    );
+    await _validateBackupFile(backup.path, encrypted: backup.isEncrypted);
   }
 
   Future<void> _validateExternalBackup() async {
@@ -333,16 +339,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final lowerPath = filePath.toLowerCase();
     if (!lowerPath.endsWith('.db') && !lowerPath.endsWith('.mabk')) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('امتداد الملف غير مدعوم')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('امتداد الملف غير مدعوم')));
       return;
     }
 
-    await _validateBackupFile(
-      filePath,
-      encrypted: lowerPath.endsWith('.mabk'),
-    );
+    await _validateBackupFile(filePath, encrypted: lowerPath.endsWith('.mabk'));
   }
 
   Future<void> _validateBackupFile(
@@ -362,19 +365,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     setState(() => _validateBusy = true);
     try {
-      await ref.read(validateBackupUseCaseProvider).execute(
-            filePath,
-            password: password,
-          );
+      await ref
+          .read(validateBackupUseCaseProvider)
+          .execute(filePath, password: password);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('النسخة صالحة للاستعادة')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('النسخة صالحة للاستعادة')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppError.message(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppError.message(error))));
     } finally {
       if (mounted) setState(() => _validateBusy = false);
     }
@@ -407,9 +409,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final lowerPath = filePath.toLowerCase();
     if (!lowerPath.endsWith('.db') && !lowerPath.endsWith('.mabk')) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('امتداد الملف غير مدعوم')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('امتداد الملف غير مدعوم')));
       return;
     }
 
@@ -430,16 +432,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     setState(() => _restoreBusy = true);
     try {
-      final restoreResult =
-          await ref.read(restoreBackupUseCaseProvider).execute(
-            filePath,
-            password: password,
-          );
+      final restoreResult = await ref
+          .read(restoreBackupUseCaseProvider)
+          .execute(filePath, password: password);
       final safetyBackupPath = restoreResult.safetyBackupPath;
-      await ref.read(settingsControllerProvider.notifier).setLastRestoreMeta(
-            at: DateTime.now(),
-            path: filePath,
-          );
+      await ref
+          .read(settingsControllerProvider.notifier)
+          .setLastRestoreMeta(at: DateTime.now(), path: filePath);
       if (safetyBackupPath != null) {
         await ref
             .read(settingsControllerProvider.notifier)
@@ -461,9 +460,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppError.message(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppError.message(error))));
     } finally {
       if (mounted) setState(() => _restoreBusy = false);
     }
@@ -480,15 +479,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (path == null || path.trim().isEmpty) return;
     await Clipboard.setData(ClipboardData(text: path));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تم نسخ المسار')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('تم نسخ المسار')));
   }
 
-  void _showPathSnackBar({
-    required String message,
-    required String path,
-  }) {
+  void _showPathSnackBar({required String message, required String path}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -501,6 +497,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<String> _resolveDefaultBackupDirectoryPath() async {
+    final appDocDir = await getApplicationDocumentsDirectory();
+    return p.join(appDocDir.path, 'backups');
   }
 
   Future<String?> _askPassword({
@@ -690,7 +691,9 @@ class _DefaultBackupsCard extends StatelessWidget {
           ListTile(
             leading: const Icon(LucideIcons.database),
             title: const Text('النسخ داخل التطبيق'),
-            subtitle: const Text('آخر النسخ المحفوظة في مجلد التطبيق الافتراضي.'),
+            subtitle: const Text(
+              'آخر النسخ المحفوظة في مجلد التطبيق الافتراضي.',
+            ),
             trailing: IconButton(
               tooltip: 'تحديث',
               icon: const Icon(Icons.refresh),
@@ -773,7 +776,10 @@ class _DefaultBackupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final date = DateFormat('yyyy/MM/dd - HH:mm', 'ar').format(backup.modifiedAt);
+    final date = DateFormat(
+      'yyyy/MM/dd - HH:mm',
+      'ar',
+    ).format(backup.modifiedAt);
     final size = _formatBytes(backup.sizeBytes);
     final type = backup.isSafetyCopy
         ? 'نسخة أمان'
@@ -787,24 +793,39 @@ class _DefaultBackupTile extends StatelessWidget {
         backup.fileName,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        textDirection: TextDirection.ltr,
+        textDirection: ui.TextDirection.ltr,
       ),
       subtitle: Text('$date\n$type - $size'),
       isThreeLine: true,
-      trailing: PopupMenuButton<String>(
-        tooltip: 'خيارات النسخة',
-        onSelected: (value) {
-          if (value == 'copy') onCopy();
-          if (value == 'validate') onValidate();
-          if (value == 'restore') onRestore();
-          if (value == 'delete') onDelete();
-        },
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: 'copy', child: Text('نسخ المسار')),
-          PopupMenuItem(value: 'validate', child: Text('فحص النسخة')),
-          PopupMenuItem(value: 'restore', child: Text('استعادة')),
-          PopupMenuItem(value: 'delete', child: Text('حذف')),
-        ],
+      trailing: SizedBox(
+        width: 132,
+        child: Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          alignment: WrapAlignment.end,
+          children: [
+            IconButton(
+              tooltip: 'نسخ المسار',
+              icon: const Icon(LucideIcons.copy),
+              onPressed: onCopy,
+            ),
+            IconButton(
+              tooltip: 'فحص النسخة',
+              icon: const Icon(LucideIcons.shieldCheck),
+              onPressed: onValidate,
+            ),
+            IconButton(
+              tooltip: 'استعادة',
+              icon: const Icon(LucideIcons.refreshCcw),
+              onPressed: onRestore,
+            ),
+            IconButton(
+              tooltip: 'حذف',
+              icon: const Icon(LucideIcons.trash2),
+              onPressed: onDelete,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -916,10 +937,7 @@ class _BackupMetaCard extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),
-        subtitle: SelectableText(
-          text,
-          textDirection: TextDirection.ltr,
-        ),
+        subtitle: SelectableText(text, textDirection: ui.TextDirection.ltr),
         trailing: IconButton(
           tooltip: 'نسخ المسار',
           icon: const Icon(LucideIcons.copy),
@@ -947,10 +965,7 @@ class _BackupGuidanceCard extends StatelessWidget {
               children: [
                 const Icon(Icons.cloud_upload_outlined),
                 const SizedBox(width: 10),
-                Text(
-                  'إرشادات النسخ الاحتياطي',
-                  style: textTheme.titleMedium,
-                ),
+                Text('إرشادات النسخ الاحتياطي', style: textTheme.titleMedium),
               ],
             ),
             const SizedBox(height: 12),
@@ -966,7 +981,8 @@ class _BackupGuidanceCard extends StatelessWidget {
             const SizedBox(height: 8),
             const _BackupTip(
               icon: Icons.restore_outlined,
-              text: 'جرّب الاستعادة فقط من ملف تثق به، لأن البيانات الحالية ستستبدل.',
+              text:
+                  'جرّب الاستعادة فقط من ملف تثق به، لأن البيانات الحالية ستستبدل.',
             ),
           ],
         ),
@@ -975,11 +991,51 @@ class _BackupGuidanceCard extends StatelessWidget {
   }
 }
 
-class _BackupTip extends StatelessWidget {
-  const _BackupTip({
-    required this.icon,
-    required this.text,
+class _DefaultBackupFolderCard extends StatelessWidget {
+  const _DefaultBackupFolderCard({
+    required this.directoryPathFuture,
+    required this.onCopy,
   });
+
+  final Future<String>? directoryPathFuture;
+  final ValueChanged<String?> onCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: directoryPathFuture,
+      builder: (context, snapshot) {
+        final title = snapshot.hasError
+            ? 'تعذر تحديد المجلد الافتراضي'
+            : 'مجلد النسخ الاحتياطي الافتراضي';
+        final subtitleText = snapshot.hasError
+            ? AppError.message(snapshot.error!)
+            : snapshot.connectionState == ConnectionState.waiting
+            ? 'جارٍ التحميل...'
+            : snapshot.data ?? 'غير متوفر';
+
+        return Card(
+          child: ListTile(
+            leading: const Icon(LucideIcons.folderOpen),
+            title: Text(title),
+            subtitle: SelectableText(
+              subtitleText,
+              textDirection: ui.TextDirection.ltr,
+            ),
+            trailing: IconButton(
+              tooltip: 'نسخ المسار',
+              icon: const Icon(LucideIcons.copy),
+              onPressed: snapshot.hasData ? () => onCopy(snapshot.data) : null,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BackupTip extends StatelessWidget {
+  const _BackupTip({required this.icon, required this.text});
 
   final IconData icon;
   final String text;

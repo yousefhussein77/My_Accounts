@@ -24,10 +24,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     final state = ref.watch(debtControllerProvider);
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () => showTransactionFormSheet(
-          context,
-          currency: _selectedCurrency,
-        ),
+        onPressed: () =>
+            showTransactionFormSheet(context, currency: _selectedCurrency),
         child: const Icon(LucideIcons.plus),
       ),
       body: SafeArea(
@@ -38,8 +36,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
             final transactions = _selectedCurrency == null
                 ? data.transactions
                 : data.transactions
-                    .where((tx) => tx.currency == _selectedCurrency)
-                    .toList();
+                      .where((tx) => tx.currency == _selectedCurrency)
+                      .toList();
             final currencyCounts = {
               for (final currency in MoneyCurrency.values)
                 currency: data.transactions

@@ -34,10 +34,7 @@ void main() {
       expect(summary.isSettled, isFalse);
       expect(summary.hasActivityIn(MoneyCurrency.yer), isTrue);
       expect(summary.hasActivityIn(MoneyCurrency.sar), isFalse);
-      expect(summary.activeCurrencies, [
-        MoneyCurrency.yer,
-        MoneyCurrency.usd,
-      ]);
+      expect(summary.activeCurrencies, [MoneyCurrency.yer, MoneyCurrency.usd]);
     });
 
     test('calculates progress only for a single debt currency', () {
@@ -60,10 +57,7 @@ void main() {
         balance: 0,
         debtTotal: 0,
         paymentTotal: 0,
-        debtByCurrency: const {
-          MoneyCurrency.yer: 1000,
-          MoneyCurrency.usd: 50,
-        },
+        debtByCurrency: const {MoneyCurrency.yer: 1000, MoneyCurrency.usd: 50},
         paymentByCurrency: const {MoneyCurrency.yer: 400},
         lastActivity: null,
       );

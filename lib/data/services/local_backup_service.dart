@@ -16,10 +16,7 @@ class RestoreBackupResult {
 }
 
 class _PreparedBackup {
-  const _PreparedBackup({
-    required this.validatedPath,
-    this.tempFile,
-  });
+  const _PreparedBackup({required this.validatedPath, this.tempFile});
 
   final String validatedPath;
   final File? tempFile;
@@ -35,10 +32,7 @@ class LocalBackupService {
   static const _maxBackupBytes = 100 * 1024 * 1024; // 100 MB
   static const _maxDefaultBackups = 10;
 
-  Future<String> createBackup({
-    String? directoryPath,
-    String? password,
-  }) async {
+  Future<String> createBackup({String? directoryPath, String? password}) async {
     await _database.database;
     await _database.close();
     try {
@@ -138,10 +132,7 @@ class LocalBackupService {
     return RestoreBackupResult(safetyBackupPath: safetyBackupPath);
   }
 
-  Future<void> validateBackup(
-    String backupFilePath, {
-    String? password,
-  }) async {
+  Future<void> validateBackup(String backupFilePath, {String? password}) async {
     final prepared = await _prepareBackupForValidation(
       backupFilePath,
       password: password,
@@ -175,8 +166,9 @@ class LocalBackupService {
           modifiedAt: stat.modified,
           sizeBytes: stat.size,
           isEncrypted: fileName.toLowerCase().endsWith(_encryptedExt),
-          isSafetyCopy:
-              fileName.toLowerCase().startsWith('my_accounts_pre_restore_'),
+          isSafetyCopy: fileName.toLowerCase().startsWith(
+            'my_accounts_pre_restore_',
+          ),
         ),
       );
     }
@@ -349,7 +341,10 @@ class LocalBackupService {
     }
   }
 
-  Future<void> _validateBackupInput(String backupFilePath, File backupFile) async {
+  Future<void> _validateBackupInput(
+    String backupFilePath,
+    File backupFile,
+  ) async {
     if (!await backupFile.exists()) {
       throw Exception('ملف النسخة الاحتياطية غير موجود');
     }
@@ -402,7 +397,8 @@ class LocalBackupService {
   bool _isManagedBackupFile(String fileName) {
     final hasSupportedExtension =
         fileName.endsWith(_plainExt) || fileName.endsWith(_encryptedExt);
-    final hasManagedPrefix = fileName.startsWith('my_accounts_backup_') ||
+    final hasManagedPrefix =
+        fileName.startsWith('my_accounts_backup_') ||
         fileName.startsWith('my_accounts_pre_restore_');
     return hasManagedPrefix && hasSupportedExtension;
   }
@@ -416,7 +412,15 @@ class LocalBackupService {
     final min = now.minute.toString().padLeft(2, '0');
     final s = now.second.toString().padLeft(2, '0');
     final ext = encrypted ? _encryptedExt : _plainExt;
-    return 'my_accounts_backup_${y}_$m_${d}_$h$min$s$ext';
+    final timestamp =
+        '$y'
+        '_'
+        '$m'
+        '_'
+        '$d'
+        '_'
+        '$h$min$s';
+    return 'my_accounts_backup_$timestamp$ext';
   }
 
   String _buildPreRestoreBackupFileName() {
@@ -427,13 +431,18 @@ class LocalBackupService {
     final h = now.hour.toString().padLeft(2, '0');
     final min = now.minute.toString().padLeft(2, '0');
     final s = now.second.toString().padLeft(2, '0');
-    return 'my_accounts_pre_restore_${y}_$m_${d}_$h$min$s$_plainExt';
+    final timestamp =
+        '$y'
+        '_'
+        '$m'
+        '_'
+        '$d'
+        '_'
+        '$h$min$s';
+    return 'my_accounts_pre_restore_$timestamp$_plainExt';
   }
 
-  Future<Uint8List> _encryptBytes(
-    List<int> plainBytes,
-    String password,
-  ) async {
+  Future<Uint8List> _encryptBytes(List<int> plainBytes, String password) async {
     final algorithm = AesGcm.with256bits();
     final salt = algorithm.newNonce();
     final nonce = algorithm.newNonce();
@@ -472,11 +481,7 @@ class LocalBackupService {
       final secretKey = await _deriveKey(password, salt);
       final algorithm = AesGcm.with256bits();
       final clear = await algorithm.decrypt(
-        SecretBox(
-          cipher,
-          nonce: nonce,
-          mac: Mac(macBytes),
-        ),
+        SecretBox(cipher, nonce: nonce, mac: Mac(macBytes)),
         secretKey: secretKey,
       );
       return Uint8List.fromList(clear);

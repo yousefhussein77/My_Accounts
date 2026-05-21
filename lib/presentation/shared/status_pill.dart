@@ -21,9 +21,11 @@ class StatusPill extends StatelessWidget {
         vertical: AppSpacing.xs + 2,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(.12),
+        color: color.withAlpha((.12 * 255).clamp(0, 255).toInt()),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(.24)),
+        border: Border.all(
+          color: color.withAlpha((.24 * 255).clamp(0, 255).toInt()),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -35,9 +37,9 @@ class StatusPill extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: color,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),

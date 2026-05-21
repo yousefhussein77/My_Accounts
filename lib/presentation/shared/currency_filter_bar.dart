@@ -70,7 +70,9 @@ class _FilterChipButton extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Material(
-      color: selected ? color.withOpacity(.13) : colors.surfaceContainerHighest,
+      color: selected
+          ? color.withAlpha((.13 * 255).clamp(0, 255).toInt())
+          : colors.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
@@ -91,9 +93,9 @@ class _FilterChipButton extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: selected ? color : colors.onSurface,
-                  fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
-                ),
+              color: selected ? color : colors.onSurface,
+              fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+            ),
           ),
         ),
       ),

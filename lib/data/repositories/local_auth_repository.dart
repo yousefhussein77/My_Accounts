@@ -41,7 +41,10 @@ class LocalAuthRepository implements AuthRepository {
         ? null
         : DateTime.tryParse(lockedUntilRaw);
     if (lockedUntil != null && lockedUntil.isAfter(DateTime.now())) {
-      final seconds = lockedUntil.difference(DateTime.now()).inSeconds.clamp(1, 9999);
+      final seconds = lockedUntil
+          .difference(DateTime.now())
+          .inSeconds
+          .clamp(1, 9999);
       throw Exception('محاولات كثيرة، حاول بعد $seconds ثانية');
     }
 
@@ -58,7 +61,10 @@ class LocalAuthRepository implements AuthRepository {
       await prefs.setInt(_loginAttemptsKey, attempts);
       if (attempts >= _maxLoginAttempts) {
         final newLockedUntil = DateTime.now().add(_loginLockDuration);
-        await prefs.setString(_loginLockedUntilKey, newLockedUntil.toIso8601String());
+        await prefs.setString(
+          _loginLockedUntilKey,
+          newLockedUntil.toIso8601String(),
+        );
       }
       throw Exception('البريد أو كلمة المرور غير صحيحة');
     }

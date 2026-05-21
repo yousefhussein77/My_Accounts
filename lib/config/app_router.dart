@@ -33,12 +33,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
-      GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
-      GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
-      GoRoute(path: '/pin-lock', builder: (context, state) => const PinLockScreen()),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/pin-lock',
+        builder: (context, state) => const PinLockScreen(),
+      ),
       GoRoute(path: '/app', builder: (context, state) => const AppShell()),
       GoRoute(
         path: '/person/:id',
@@ -48,8 +63,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           transitionsBuilder: _fadeSlide,
         ),
       ),
-      GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
-      GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
     ],
   );
 });
@@ -63,7 +84,10 @@ Widget _fadeSlide(
   return FadeTransition(
     opacity: animation,
     child: SlideTransition(
-      position: Tween(begin: const Offset(0, .03), end: Offset.zero).animate(animation),
+      position: Tween(
+        begin: const Offset(0, .03),
+        end: Offset.zero,
+      ).animate(animation),
       child: child,
     ),
   );

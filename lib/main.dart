@@ -10,24 +10,27 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
 
 Future<void> main() async {
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    FlutterError.onError = (details) {
-      FlutterError.presentError(details);
-      Zone.current.handleUncaughtError(
-        details.exception,
-        details.stack ?? StackTrace.current,
-      );
-    };
-    await initializeDateFormatting('ar');
-    await AppDatabase.instance.database;
-    runApp(const ProviderScope(child: MyAccountsApp()));
-  }, (error, stackTrace) {
-    if (!kReleaseMode) {
-      debugPrint('Uncaught app error: $error');
-      debugPrintStack(stackTrace: stackTrace);
-    }
-  });
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      FlutterError.onError = (details) {
+        FlutterError.presentError(details);
+        Zone.current.handleUncaughtError(
+          details.exception,
+          details.stack ?? StackTrace.current,
+        );
+      };
+      await initializeDateFormatting('ar');
+      await AppDatabase.instance.database;
+      runApp(const ProviderScope(child: MyAccountsApp()));
+    },
+    (error, stackTrace) {
+      if (!kReleaseMode) {
+        debugPrint('Uncaught app error: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
+    },
+  );
 }
 
 class MyAccountsApp extends ConsumerWidget {
@@ -50,18 +53,18 @@ class MyAccountsApp extends ConsumerWidget {
       ],
       builder: (context, child) {
         ErrorWidget.builder = (details) => Material(
-              color: Theme.of(context).colorScheme.surface,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    'حدث خطأ غير متوقع في الواجهة',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+          color: Theme.of(context).colorScheme.surface,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'حدث خطأ غير متوقع في الواجهة',
+                style: Theme.of(context).textTheme.bodyLarge,
+                textAlign: TextAlign.center,
               ),
-            );
+            ),
+          ),
+        );
         return Directionality(
           textDirection: TextDirection.rtl,
           child: child ?? const SizedBox.shrink(),

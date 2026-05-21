@@ -45,7 +45,12 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
   final Color danger;
 
   @override
-  AppStatusColors copyWith({Color? success, Color? info, Color? warning, Color? danger}) {
+  AppStatusColors copyWith({
+    Color? success,
+    Color? info,
+    Color? warning,
+    Color? danger,
+  }) {
     return AppStatusColors(
       success: success ?? this.success,
       info: info ?? this.info,

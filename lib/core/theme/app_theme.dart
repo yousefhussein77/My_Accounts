@@ -8,24 +8,24 @@ class AppTheme {
   const AppTheme._();
 
   static ThemeData get lightTheme => _buildTheme(
-        brightness: Brightness.light,
-        background: AppColors.lightBackground,
-        surface: AppColors.lightSurface,
-        surfaceSoft: AppColors.lightSurfaceSoft,
-        textPrimary: AppColors.lightTextPrimary,
-        textSecondary: AppColors.lightTextSecondary,
-        border: AppColors.lightBorder,
-      );
+    brightness: Brightness.light,
+    background: AppColors.lightBackground,
+    surface: AppColors.lightSurface,
+    surfaceSoft: AppColors.lightSurfaceSoft,
+    textPrimary: AppColors.lightTextPrimary,
+    textSecondary: AppColors.lightTextSecondary,
+    border: AppColors.lightBorder,
+  );
 
   static ThemeData get darkTheme => _buildTheme(
-        brightness: Brightness.dark,
-        background: AppColors.darkBackground,
-        surface: AppColors.darkSurface,
-        surfaceSoft: AppColors.darkSurfaceSoft,
-        textPrimary: AppColors.darkTextPrimary,
-        textSecondary: AppColors.darkTextSecondary,
-        border: AppColors.darkBorder,
-      );
+    brightness: Brightness.dark,
+    background: AppColors.darkBackground,
+    surface: AppColors.darkSurface,
+    surfaceSoft: AppColors.darkSurfaceSoft,
+    textPrimary: AppColors.darkTextPrimary,
+    textSecondary: AppColors.darkTextSecondary,
+    border: AppColors.darkBorder,
+  );
 
   static ThemeData _buildTheme({
     required Brightness brightness,
@@ -38,21 +38,22 @@ class AppTheme {
   }) {
     final isDark = brightness == Brightness.dark;
 
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primaryGold,
-      brightness: brightness,
-    ).copyWith(
-      primary: AppColors.primaryGold,
-      onPrimary: AppColors.lightTextPrimary,
-      secondary: AppColors.secondaryGold,
-      onSecondary: AppColors.lightTextPrimary,
-      surface: surface,
-      onSurface: textPrimary,
-      error: AppColors.danger,
-      onError: Colors.white,
-      outline: border,
-      surfaceContainerHighest: surfaceSoft,
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: AppColors.primaryGold,
+          brightness: brightness,
+        ).copyWith(
+          primary: AppColors.primaryGold,
+          onPrimary: AppColors.lightTextPrimary,
+          secondary: AppColors.secondaryGold,
+          onSecondary: AppColors.lightTextPrimary,
+          surface: surface,
+          onSurface: textPrimary,
+          error: AppColors.danger,
+          onError: Colors.white,
+          outline: border,
+          surfaceContainerHighest: surfaceSoft,
+        );
 
     final base = ThemeData(
       useMaterial3: true,
@@ -60,7 +61,11 @@ class AppTheme {
       colorScheme: colorScheme,
     );
 
-    final textTheme = AppTextStyles.apply(base.textTheme, textPrimary, textSecondary);
+    final textTheme = AppTextStyles.apply(
+      base.textTheme,
+      textPrimary,
+      textSecondary,
+    );
 
     return base.copyWith(
       scaffoldBackgroundColor: background,
@@ -74,7 +79,9 @@ class AppTheme {
         backgroundColor: surface,
         foregroundColor: textPrimary,
         iconTheme: IconThemeData(color: textPrimary),
-        titleTextStyle: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        titleTextStyle: textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
       ),
       cardTheme: CardThemeData(
         color: surface,
@@ -104,7 +111,10 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.primaryGold, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.primaryGold,
+            width: 1.5,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -121,7 +131,9 @@ class AppTheme {
           minimumSize: const Size.fromHeight(46),
           backgroundColor: AppColors.primaryGold,
           foregroundColor: AppColors.lightTextPrimary,
-          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
@@ -133,7 +145,9 @@ class AppTheme {
           minimumSize: const Size.fromHeight(46),
           backgroundColor: AppColors.primaryGold,
           foregroundColor: AppColors.lightTextPrimary,
-          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
@@ -145,7 +159,9 @@ class AppTheme {
           minimumSize: const Size.fromHeight(46),
           foregroundColor: AppColors.primaryGold,
           side: const BorderSide(color: AppColors.primaryGold),
-          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
@@ -154,7 +170,9 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.secondaryGold,
-          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -178,7 +196,9 @@ class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: surface,
         shape: RoundedRectangleBorder(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.md)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.md),
+          ),
           side: BorderSide(color: border),
         ),
       ),
@@ -191,15 +211,21 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
-        indicatorColor: AppColors.primaryGold.withOpacity(0.2),
-        iconTheme: MaterialStateProperty.resolveWith(
+        indicatorColor: AppColors.primaryGold.withAlpha(
+          (0.2 * 255).clamp(0, 255).toInt(),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
-            color: states.contains(MaterialState.selected) ? textPrimary : textSecondary,
+            color: states.contains(WidgetState.selected)
+                ? textPrimary
+                : textSecondary,
           ),
         ),
-        labelTextStyle: MaterialStateProperty.resolveWith(
+        labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => textTheme.labelMedium?.copyWith(
-            color: states.contains(MaterialState.selected) ? textPrimary : textSecondary,
+            color: states.contains(WidgetState.selected)
+                ? textPrimary
+                : textSecondary,
           ),
         ),
       ),
@@ -212,9 +238,9 @@ class AppTheme {
       dropdownMenuTheme: DropdownMenuThemeData(
         textStyle: textTheme.bodyMedium?.copyWith(color: textPrimary),
         menuStyle: MenuStyle(
-          backgroundColor: MaterialStatePropertyAll(surface),
-          side: MaterialStatePropertyAll(BorderSide(color: border)),
-          shape: MaterialStatePropertyAll(
+          backgroundColor: WidgetStatePropertyAll(surface),
+          side: WidgetStatePropertyAll(BorderSide(color: border)),
+          shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
@@ -230,8 +256,8 @@ class AppTheme {
         ),
       ),
       dataTableTheme: DataTableThemeData(
-        headingRowColor: MaterialStatePropertyAll(surfaceSoft),
-        dataRowColor: MaterialStatePropertyAll(surface),
+        headingRowColor: WidgetStatePropertyAll(surfaceSoft),
+        dataRowColor: WidgetStatePropertyAll(surface),
         headingTextStyle: textTheme.titleSmall?.copyWith(
           color: textPrimary,
           fontWeight: FontWeight.w700,

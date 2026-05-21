@@ -69,9 +69,9 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
               children: [
                 Text(
                   widget.person == null ? 'إضافة شخص' : 'تعديل الشخص',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 14),
                 TextFormField(
@@ -105,7 +105,9 @@ class _PersonFormState extends ConsumerState<_PersonForm> {
                   onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
                     try {
-                      await ref.read(debtControllerProvider.notifier).savePerson(
+                      await ref
+                          .read(debtControllerProvider.notifier)
+                          .savePerson(
                             id: widget.person?.id,
                             name: _name.text.trim(),
                             phone: _phone.text.trim(),
